@@ -1,6 +1,6 @@
 package ru.luna_koly.pear.events
 
-import ru.luna_koly.pear.Net
+import ru.luna_koly.pear.net.Net
 import tornadofx.EventBus
 import tornadofx.FXEvent
 

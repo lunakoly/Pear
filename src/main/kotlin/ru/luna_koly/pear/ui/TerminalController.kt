@@ -1,9 +1,7 @@
 package ru.luna_koly.pear.ui
 
-import ru.luna_koly.pear.Logger
-import ru.luna_koly.pear.Net
+import ru.luna_koly.pear.net.Net
 import ru.luna_koly.pear.events.ConnectionRequest
-import ru.luna_koly.pear.events.ServerStartRequest
 import tornadofx.Controller
 
 class TerminalController : Controller() {
@@ -17,6 +15,10 @@ class TerminalController : Controller() {
         }
     }
 
+    private fun trySend(args: List<String>) {
+
+    }
+
     fun proceed(command: String) {
         val args = command
             .split(Regex("\\s+"))
@@ -27,6 +29,7 @@ class TerminalController : Controller() {
 
         when (args[0]) {
             "connect" -> tryRaiseConnection(args)
+            "send" -> trySend(args)
             "exit" -> view.close()
             else -> view.log("Could not find command `${args[0]}`")
         }

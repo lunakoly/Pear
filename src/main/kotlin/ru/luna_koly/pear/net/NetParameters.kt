@@ -1,4 +1,4 @@
-package ru.luna_koly.pear
+package ru.luna_koly.pear.net
 
 fun Int.provide(mask: Int) = this and mask != 0
 

@@ -33,11 +33,11 @@ class TerminalView : View() {
 
     init {
         subscribe<ConnectionEstablishedEvent> {
-            Logger.log("UI", "Connection Established on client side!")
+            Logger.log("UI", "Connection Established with ${it.connection}")
         }
 
         subscribe<DataReceivedEvent> {
-            Logger.log("UI", "Data received: `${String(it.data)}`")
+            Logger.log("UI", "Data received: `${it.connection.readString()}`")
         }
     }
 
