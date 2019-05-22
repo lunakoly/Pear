@@ -3,7 +3,6 @@ package ru.luna_koly.pear.ui
 import javafx.beans.property.SimpleStringProperty
 import ru.luna_koly.pear.Logger
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
-import ru.luna_koly.pear.events.DataReceivedEvent
 import tornadofx.*
 
 class TerminalView : View() {
@@ -36,8 +35,8 @@ class TerminalView : View() {
             Logger.log("UI", "Connection Established with ${it.connection}")
         }
 
-        subscribe<DataReceivedEvent> {
-            Logger.log("UI", "Data received: `${it.connection.readString()}`")
+        subscribe<ru.luna_koly.pear.events.MessageEvent> {
+            Logger.log("UI", "Message > ${it.text}")
         }
     }
 

@@ -1,8 +1,10 @@
 package ru.luna_koly.pear.ui
 
-import ru.luna_koly.pear.net.Net
+import ru.luna_koly.pear.DataBase
 import ru.luna_koly.pear.events.ConnectionRequest
+import ru.luna_koly.pear.net.Net
 import tornadofx.Controller
+import tornadofx.isInt
 
 class TerminalController : Controller() {
     private val view: TerminalView by inject()
@@ -15,8 +17,39 @@ class TerminalController : Controller() {
         }
     }
 
-    private fun trySend(args: List<String>) {
+    private fun list(args: List<String>) {
+        when {
+            args.size < 2 -> view.log("Usage > list (profiles)")
 
+            else -> {
+                view.log(
+                    DataBase.profiles
+                        .mapIndexed { index, it -> "$index - $it" }
+                        .joinToString("\n")
+                )
+            }
+        }
+    }
+
+    private fun trySend(args: List<String>) {
+        when {
+            args.size < 2 -> view.log("Usage > send <profile id> word1 [,word2...]")
+            !args[1].isInt() -> view.log("Error > profile id must be an integer")
+            args.size < 3 -> view.log("Error > message is required")
+
+            else -> {
+                val id = args[1].toInt()
+                val profile = DataBase.profiles.getOrNull(id)
+
+                if (profile == null) {
+                    view.log("Error > $id is not a valid profile id")
+                    return
+                }
+
+                val message = args.subList(2, args.size).joinToString(" ")
+                profile.send(message)
+            }
+        }
     }
 
     fun proceed(command: String) {
@@ -29,6 +62,7 @@ class TerminalController : Controller() {
 
         when (args[0]) {
             "connect" -> tryRaiseConnection(args)
+            "list" -> list(args)
             "send" -> trySend(args)
             "exit" -> view.close()
             else -> view.log("Could not find command `${args[0]}`")

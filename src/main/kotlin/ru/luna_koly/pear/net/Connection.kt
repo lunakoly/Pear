@@ -103,6 +103,11 @@ class Connection(private val channel: SocketChannel) {
     /**
      * Alias for string data
      */
+    fun sendString(string: String) = sendBytes(string.toByteArray(Charsets.UTF_8))
+
+    /**
+     * Alias for string data
+     */
     fun readString() = String(readBytes(), Charsets.UTF_8)
 
     override fun toString() = channel.remoteAddress.toString()

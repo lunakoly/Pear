@@ -1,14 +1,12 @@
 package ru.luna_koly.pear.net
 
 import ru.luna_koly.pear.Logger
-import ru.luna_koly.pear.events.ConnectionEstablishedEvent
-import ru.luna_koly.pear.events.ConnectionRequest
-import ru.luna_koly.pear.events.DataReceivedEvent
-import ru.luna_koly.pear.events.ServerStartRequest
+import ru.luna_koly.pear.events.*
+import ru.luna_koly.pear.json.JsonParser
 import tornadofx.Controller
-import java.lang.Exception
 import java.net.InetSocketAddress
 import java.nio.channels.*
+import java.util.*
 
 /**
  * Performs network requests when corresponding
@@ -32,6 +30,12 @@ class Net : Controller() {
     private val selector: Selector = Selector.open()
     private val serverSocket: ServerSocketChannel = ServerSocketChannel.open()
 
+    /**
+     * They will be registered on the
+     * next Net thread loop cycle
+     */
+    private val registerQueue = LinkedList<SocketChannel>()
+
     private val serverThread = Thread {
         // configure server
         serverSocket.configureBlocking(false)
@@ -44,7 +48,17 @@ class Net : Controller() {
 
         // run server checkout loop
         while (serverSocket.isOpen) {
-            selector.select()
+            synchronized(registerQueue) {
+                registerQueue.forEach {
+                    it.configureBlocking(false)
+                    it.register(selector, SelectionKey.OP_READ)
+                }
+                registerQueue.clear()
+            }
+
+            if (selector.selectNow() == 0)
+                continue
+
             val selection = selector.selectedKeys()
 
             for (that in selection)
@@ -61,21 +75,30 @@ class Net : Controller() {
         val socket = (it.channel() as ServerSocketChannel).accept()
         val connection = Connection(socket)
 
-        Protocol.onClientAccepted(connection)
+        if (Protocol.onClientAccepted(connection)) {
+            socket.configureBlocking(false)
+            socket.register(it.selector(), SelectionKey.OP_READ)
+            Logger.log(
+                "Net",
+                "Server accepted new socket from address `${socket.socket().inetAddress.hostName}`"
+            )
 
-        socket.configureBlocking(false)
-        socket.register(it.selector(), SelectionKey.OP_READ)
-        Logger.log(
-            "Net",
-            "Server accepted new socket from address `${socket.socket().inetAddress.hostName}`"
-        )
-
-        fire(ConnectionEstablishedEvent(connection))
+            println("@@")
+            fire(ConnectionEstablishedEvent(connection))
+        }
     }
 
     private fun onDataReceived(it: SelectionKey) {
         val socket = it.channel() as SocketChannel
-        fire(DataReceivedEvent(Connection(socket)))
+        val connection = Connection(socket)
+
+        try {
+            val content = JsonParser.parse(connection.readString())
+            val messageEvent = MessageEvent(content["text"].value)
+            fire(messageEvent)
+        } catch (e: Exception) {
+            Logger.log("Net", "Error > Invalid message received")
+        }
     }
 
     init {
@@ -109,11 +132,11 @@ class Net : Controller() {
             "Client requested > Address `${event.address}` and port `$DEFAULT_PORT`"
         )
 
-        Protocol.onServerAccepted(connection)
-
-        socket.configureBlocking(false)
-        socket.register(selector, SelectionKey.OP_READ)
-
-        fire(ConnectionEstablishedEvent(connection))
+        if (Protocol.onServerAccepted(connection)) {
+            println("!! 3")
+            registerQueue.add(socket)
+            println("!! 4")
+            fire(ConnectionEstablishedEvent(connection))
+        }
     }
 }
