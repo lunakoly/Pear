@@ -1,4 +1,4 @@
-package ru.luna_koly.pear
+package ru.luna_koly.pear.util
 
 import ru.luna_koly.pear.events.LogEvent
 import ru.luna_koly.pear.ui.TerminalView

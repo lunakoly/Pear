@@ -1,7 +1,7 @@
 package ru.luna_koly.pear.ui
 
 import javafx.beans.property.SimpleStringProperty
-import ru.luna_koly.pear.Logger
+import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
 import tornadofx.*
 

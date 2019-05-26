@@ -1,12 +1,14 @@
 package ru.luna_koly.pear.net
 
-import ru.luna_koly.pear.Logger
+import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.events.*
 import ru.luna_koly.pear.json.JsonParser
+import ru.luna_koly.pear.net.connection.Connection
 import tornadofx.Controller
 import java.net.InetSocketAddress
 import java.nio.channels.*
 import java.util.*
+import kotlin.collections.HashMap
 
 /**
  * Performs network requests when corresponding
@@ -20,7 +22,6 @@ import java.util.*
 class Net : Controller() {
     companion object {
         const val DEFAULT_PORT = 1234
-        const val CHUNK_CAPACITY = 48
     }
 
     /**
@@ -36,6 +37,16 @@ class Net : Controller() {
      */
     private val registerQueue = LinkedList<SocketChannel>()
 
+    /**
+     * Used to pass the received data to the
+     * proper receiver
+     */
+    private val connections = HashMap<SocketChannel, Connection>()
+
+    /**
+     * Net Thread that runs selector and
+     * manages its events
+     */
     private val serverThread = Thread {
         // configure server
         serverSocket.configureBlocking(false)
@@ -63,34 +74,49 @@ class Net : Controller() {
 
             for (that in selection)
                 when {
-                    that.isAcceptable -> onClientAccepted(that)
-                    that.isReadable -> onDataReceived(that)
+                    that.isAcceptable -> onClientAccepted((that.channel() as ServerSocketChannel).accept())
+                    that.isReadable -> onDataReceived(that.channel() as SocketChannel)
                 }
 
             selection.clear()
         }
     }
 
-    private fun onClientAccepted(it: SelectionKey) {
-        val socket = (it.channel() as ServerSocketChannel).accept()
+    /**
+     * Adds socket to the register queue
+     * so that it'll be registered as soon
+     * as current selector events are processed
+     */
+    private fun register(socket: SocketChannel, connection: Connection) {
+        synchronized(registerQueue) {
+            registerQueue.add(socket)
+        }
+
+        synchronized(connections) {
+            connections[socket] = connection
+        }
+    }
+
+    private fun onClientAccepted(socket: SocketChannel) {
         val connection = Connection(socket)
 
-        if (Protocol.onClientAccepted(connection)) {
-            socket.configureBlocking(false)
-            socket.register(it.selector(), SelectionKey.OP_READ)
+        if (Protocol.acceptClient(connection)) {
             Logger.log(
                 "Net",
                 "Server accepted new socket from address `${socket.socket().inetAddress.hostName}`"
             )
 
-            println("@@")
+            register(socket, connection)
             fire(ConnectionEstablishedEvent(connection))
         }
     }
 
-    private fun onDataReceived(it: SelectionKey) {
-        val socket = it.channel() as SocketChannel
-        val connection = Connection(socket)
+    private fun onDataReceived(socket: SocketChannel) {
+        val connection: Connection
+
+        synchronized(connections) {
+            connection = connections[socket] ?: return
+        }
 
         try {
             val content = JsonParser.parse(connection.readString())
@@ -132,10 +158,8 @@ class Net : Controller() {
             "Client requested > Address `${event.address}` and port `$DEFAULT_PORT`"
         )
 
-        if (Protocol.onServerAccepted(connection)) {
-            println("!! 3")
-            registerQueue.add(socket)
-            println("!! 4")
+        if (Protocol.acceptServer(connection)) {
+            register(socket, connection)
             fire(ConnectionEstablishedEvent(connection))
         }
     }

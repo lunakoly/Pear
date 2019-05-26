@@ -1,6 +1,6 @@
 package ru.luna_koly.pear.ui
 
-import ru.luna_koly.pear.Logger
+import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.net.Net
 import ru.luna_koly.pear.events.ServerStartRequest
 import tornadofx.App

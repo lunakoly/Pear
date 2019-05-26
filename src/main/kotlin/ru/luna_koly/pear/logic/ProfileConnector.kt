@@ -1,10 +1,9 @@
-package ru.luna_koly.pear
+package ru.luna_koly.pear.logic
 
 import ru.luna_koly.pear.json.Json
-import ru.luna_koly.pear.net.Connection
-import java.security.PublicKey
+import ru.luna_koly.pear.net.connection.Connection
 
-class Profile(val identity: PublicKey) {
+class ProfileConnector(val profile: Profile) {
     private var lastBoundConnection: Connection? = null
 
     fun setLastBoundConnection(connection: Connection) {
@@ -19,8 +18,8 @@ class Profile(val identity: PublicKey) {
     }
 
     override fun toString(): String {
-        return "Profile {${
-            identity.encoded
+        return "ProfileConnector {${
+            profile.identity.encoded
                 .toString(Charsets.UTF_8)
                 .substring(0, 10)
                 .replace("\n", "")

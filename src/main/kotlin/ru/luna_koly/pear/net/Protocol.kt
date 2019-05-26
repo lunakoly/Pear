@@ -1,8 +1,10 @@
 package ru.luna_koly.pear.net
 
-import ru.luna_koly.pear.DataBase
-import ru.luna_koly.pear.Logger
-import ru.luna_koly.pear.Profile
+import ru.luna_koly.pear.logic.DataBase
+import ru.luna_koly.pear.util.Logger
+import ru.luna_koly.pear.logic.ProfileConnector
+import ru.luna_koly.pear.net.connection.Connection
+import ru.luna_koly.pear.net.connection.SymmetricProtector
 import java.security.PublicKey
 
 object Protocol {
@@ -13,7 +15,7 @@ object Protocol {
 
     private fun askIdentity(side: String, connection: Connection, othersKey: PublicKey): Boolean {
         val secret = Cryptor.generateSecret()
-        Logger.log("Protocol", "$side's secret = `${secret.toString(Charsets.UTF_8)}`")
+        Logger.log("Protocol", "$side's secret (${secret.size}) = `${secret.toString(Charsets.UTF_8)}`")
 
         connection.sendBytes(Cryptor.encrypt(secret, othersKey))
         Logger.log("Protocol", "$side sends secret")
@@ -23,7 +25,7 @@ object Protocol {
         val echoSecret = Cryptor.decrypt(echoEncryptedSecret)
         Logger.log("Protocol", "$side got his secret back")
 
-        Logger.log("Protocol", "$side's REFLECTED secret = `${echoSecret.toString(Charsets.UTF_8)}`")
+        Logger.log("Protocol", "$side's REFLECTED secret (${echoSecret.size}) = `${echoSecret.toString(Charsets.UTF_8)}`")
 
         if (!echoSecret.contentEquals(secret)) {
             Logger.log("Protocol", "$side's secret is NOT correct")
@@ -40,53 +42,65 @@ object Protocol {
         val othersSecret = Cryptor.decrypt(othersEncryptedSecret)
         Logger.log("Protocol", "$side's secret received")
 
-        Logger.log("Protocol", "$side's RECEIVED secret = `${othersSecret.toString(Charsets.UTF_8)}`")
+        Logger.log("Protocol", "$side's RECEIVED secret (${othersSecret.size}) = `${othersSecret.toString(Charsets.UTF_8)}`")
 
         connection.sendBytes(Cryptor.encrypt(othersSecret, othersKey))
         Logger.log("Protocol", "$side's secret is sent back")
     }
 
-    fun onClientAccepted(connection: Connection): Boolean {
+    fun acceptClient(connection: Connection): Boolean {
         connection.sendBytes(Cryptor.publicKey.encoded)
-        Logger.log("Net", "Acceptor sends their encryption key")
+//        Logger.log("Net", "Acceptor sends their encryption key")
 
         val othersKey = acceptPublicKey(connection)
-        Logger.log("Net", "Initiator sent their encryption key and we caught it")
+//        Logger.log("Net", "Initiator sent their encryption key and we caught it")
 
         if (!askIdentity("Acceptor", connection, othersKey))
             return false
 
         proveIdentity("Initiator", connection, othersKey)
 
-        val profile = Profile(othersKey)
-        profile.setLastBoundConnection(connection)
-        DataBase.profiles.add(profile)
+        // add protection layer to the connection
+        val protector = SymmetricProtector.generate()
+        connection.sendBytes(protector.key.encoded)
+        connection.sendBytes(protector.ivSpec.iv)
+        connection.protector = protector
 
-        Logger.log("Protocol", "Profile " + (DataBase.profiles.size - 1) + " is registered as Acceptor")
+        // bind connection with profile
+        val profile = DataBase.getProfileFor(othersKey)
+        val profileConnector = ProfileConnector(profile)
+        profileConnector.setLastBoundConnection(connection)
+        DataBase.addProfileConnector(profileConnector)
+
+        Logger.log("Protocol", "ProfileConnector " + (DataBase.profileConnectors.size - 1) + " is registered as Acceptor")
         return true
     }
 
-    fun onServerAccepted(connection: Connection): Boolean {
+    fun acceptServer(connection: Connection): Boolean {
         val othersKey = acceptPublicKey(connection)
-        Logger.log("Protocol", "Acceptor sent their encryption key and we caught it")
+//        Logger.log("Protocol", "Acceptor sent their encryption key and we caught it")
 
         connection.sendBytes(Cryptor.publicKey.encoded)
-        Logger.log("Protocol", "Initiator sends their encryption key")
+//        Logger.log("Protocol", "Initiator sends their encryption key")
 
         proveIdentity("Acceptor", connection, othersKey)
 
         if (!askIdentity("Initiator", connection, othersKey))
             return false
 
-        println("!! 1")
+        // add protection layer to the connection
+        val protectorKey = connection.readBytes()
+        val protectorIv = connection.readBytes()
+        val protector = SymmetricProtector.fromByteData(protectorKey, protectorIv)
+        connection.protector = protector
 
-        val profile = Profile(othersKey)
-        profile.setLastBoundConnection(connection)
-        DataBase.profiles.add(profile)
+        // bind connection with profile
+        val profile = DataBase.getProfileFor(othersKey)
+        val profileConnector = ProfileConnector(profile)
+        profileConnector.setLastBoundConnection(connection)
+        DataBase.addProfileConnector(profileConnector)
 
-        println("!! 2")
-
-        Logger.log("Protocol", "Profile " + (DataBase.profiles.size - 1) + " is registered as Initiator")
+        Logger.log("Protocol", "ProfileConnector " + (DataBase.profileConnectors.size - 1) + " is registered as Initiator")
         return true
     }
 }

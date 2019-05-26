@@ -1,19 +1,27 @@
-package ru.luna_koly.pear.net
+package ru.luna_koly.pear.net.connection
 
+import ru.luna_koly.pear.util.ByteCache
+import ru.luna_koly.pear.net.NetParameters
+import ru.luna_koly.pear.net.provide
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-import java.util.*
 
 /**
  * Allows to easily read data from
  * SocketChannel and write to it
  */
 class Connection(private val channel: SocketChannel) {
+    companion object {
+        const val CHUNK_CAPACITY = 48
+    }
+
+    var protector: Protector = TrivialProtector()
+
     /**
      * Sends a package containing parameters byte and
      * part of data described via offset and length
      */
-    private fun sendChunk(data: ByteArray, offset: Int, length: Int, parameters: Int) {
+    private fun sendRawChunk(data: ByteArray, offset: Int, length: Int, parameters: Int) {
         val buffer = ByteBuffer.allocate(length + 1)
         buffer.put(parameters.toByte())
         buffer.put(data, offset, length)
@@ -29,34 +37,39 @@ class Connection(private val channel: SocketChannel) {
      * pieces and require other side to reconstruct it
      * via their headerCache
      */
-    fun sendBytes(data: ByteArray) {
+    private fun sendRawBytes(data: ByteArray) {
         var offset = 0
 
-        while (offset < data.size - Net.CHUNK_CAPACITY) {
-            sendChunk(data, offset,
-                Net.CHUNK_CAPACITY,
+        while (offset < data.size - CHUNK_CAPACITY) {
+            sendRawChunk(data, offset,
+                CHUNK_CAPACITY,
                 NetParameters.HAS_NEXT
             )
-            offset += Net.CHUNK_CAPACITY
+            offset += CHUNK_CAPACITY
         }
 
-        sendChunk(data, offset, data.size - offset, NetParameters.NOTHING)
+        sendRawChunk(data, offset, data.size - offset, NetParameters.NOTHING)
     }
+
+    /**
+     * Protects data and sends it
+     */
+    fun sendBytes(data: ByteArray) = sendRawBytes(protector.encrypt(data))
 
     /**
      * Caches incoming ByteArray data and helps to
      * construct it back into one big ByteArray when
      * no further packages are expected (NetParameters.HAS_NEXT)
      */
-    private val cache = LinkedList<ByteArray>()
+    private val cache = ByteCache()
 
     /**
      * Accepts ByteArray coming from the socket. Due to
      * the fact that data may be passed as several packages,
      * it will automatically be reconstructed via headerCache
      */
-    fun readBytes(): ByteArray {
-        val buffer = ByteBuffer.allocate(Net.CHUNK_CAPACITY + 1)
+    private fun readRawBytes(): ByteArray {
+        val buffer = ByteBuffer.allocate(CHUNK_CAPACITY + 1)
         var headerLength = 0
         cache.clear()
 
@@ -89,16 +102,13 @@ class Connection(private val channel: SocketChannel) {
         } while (parameters.provide(NetParameters.HAS_NEXT))
 
         // bring list items together into `header`
-        val header = ByteArray(headerLength)
-        var index = 0
-
-        for (it in cache) {
-            System.arraycopy(it, 0, header, index, it.size)
-            index += it.size
-        }
-
-        return header
+        return cache.concat()
     }
+
+    /**
+     * Reads protected data
+     */
+    fun readBytes() = protector.decrypt(readRawBytes())
 
     /**
      * Alias for string data

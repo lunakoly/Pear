@@ -1,6 +1,6 @@
 package ru.luna_koly.pear.ui
 
-import ru.luna_koly.pear.DataBase
+import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.events.ConnectionRequest
 import ru.luna_koly.pear.net.Net
 import tornadofx.Controller
@@ -19,14 +19,30 @@ class TerminalController : Controller() {
 
     private fun list(args: List<String>) {
         when {
-            args.size < 2 -> view.log("Usage > list (profiles)")
+            args.size < 2 -> view.log("Usage > list (profiles | connectors)")
+
+            args[1] == "profiles" -> {
+                synchronized(DataBase.profiles) {
+                    view.log(
+                        DataBase.profiles
+                            .mapIndexed { index, it -> "$index - $it" }
+                            .joinToString("\n")
+                    )
+                }
+            }
+
+            args[1] == "connectors" -> {
+                synchronized(DataBase.profileConnectors) {
+                    view.log(
+                        DataBase.profileConnectors
+                            .mapIndexed { index, it -> "$index - $it" }
+                            .joinToString("\n")
+                    )
+                }
+            }
 
             else -> {
-                view.log(
-                    DataBase.profiles
-                        .mapIndexed { index, it -> "$index - $it" }
-                        .joinToString("\n")
-                )
+                view.log("Error > ${args[1]} is not a proper target")
             }
         }
     }
@@ -39,7 +55,7 @@ class TerminalController : Controller() {
 
             else -> {
                 val id = args[1].toInt()
-                val profile = DataBase.profiles.getOrNull(id)
+                val profile = DataBase.profileConnectors.getOrNull(id)
 
                 if (profile == null) {
                     view.log("Error > $id is not a valid profile id")
