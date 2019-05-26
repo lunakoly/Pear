@@ -1,5 +1,6 @@
 package ru.luna_koly.pear.logic
 
+import ru.luna_koly.pear.net.Cryptor
 import java.io.File
 import java.security.PublicKey
 
@@ -44,5 +45,7 @@ object DataBase {
         if (settingsFile.isFile) {
 
         }
+
+        profiles.add(Profile(Cryptor.publicKey))
     }
 }

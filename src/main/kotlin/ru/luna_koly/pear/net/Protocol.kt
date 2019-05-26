@@ -48,7 +48,7 @@ object Protocol {
         Logger.log("Protocol", "$side's secret is sent back")
     }
 
-    fun acceptClient(connection: Connection): Boolean {
+    fun acceptClient(connection: Connection): ProfileConnector? {
         connection.sendBytes(Cryptor.publicKey.encoded)
 //        Logger.log("Net", "Acceptor sends their encryption key")
 
@@ -56,7 +56,7 @@ object Protocol {
 //        Logger.log("Net", "Initiator sent their encryption key and we caught it")
 
         if (!askIdentity("Acceptor", connection, othersKey))
-            return false
+            return null
 
         proveIdentity("Initiator", connection, othersKey)
 
@@ -69,14 +69,14 @@ object Protocol {
         // bind connection with profile
         val profile = DataBase.getProfileFor(othersKey)
         val profileConnector = ProfileConnector(profile)
-        profileConnector.setLastBoundConnection(connection)
+        profileConnector.lastBoundConnection = connection
         DataBase.addProfileConnector(profileConnector)
 
         Logger.log("Protocol", "ProfileConnector " + (DataBase.profileConnectors.size - 1) + " is registered as Acceptor")
-        return true
+        return profileConnector
     }
 
-    fun acceptServer(connection: Connection): Boolean {
+    fun acceptServer(connection: Connection): ProfileConnector? {
         val othersKey = acceptPublicKey(connection)
 //        Logger.log("Protocol", "Acceptor sent their encryption key and we caught it")
 
@@ -86,7 +86,7 @@ object Protocol {
         proveIdentity("Acceptor", connection, othersKey)
 
         if (!askIdentity("Initiator", connection, othersKey))
-            return false
+            return null
 
         // add protection layer to the connection
         val protectorKey = connection.readBytes()
@@ -97,10 +97,10 @@ object Protocol {
         // bind connection with profile
         val profile = DataBase.getProfileFor(othersKey)
         val profileConnector = ProfileConnector(profile)
-        profileConnector.setLastBoundConnection(connection)
+        profileConnector.lastBoundConnection = connection
         DataBase.addProfileConnector(profileConnector)
 
         Logger.log("Protocol", "ProfileConnector " + (DataBase.profileConnectors.size - 1) + " is registered as Initiator")
-        return true
+        return profileConnector
     }
 }

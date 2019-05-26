@@ -1,8 +1,6 @@
-package ru.luna_koly.pear.ui
+package ru.luna_koly.pear.components
 
 import ru.luna_koly.pear.util.Logger
-import ru.luna_koly.pear.net.Net
-import ru.luna_koly.pear.events.ServerStartRequest
 import tornadofx.App
 import tornadofx.find
 
@@ -11,8 +9,11 @@ class TheApp : App(TerminalView::class) {
         // initialize Net component and
         // start background request handler
         // to catch incoming events
-        find(Net::class)
-        fire(ServerStartRequest)
+        val netThread = Thread(find(Net::class))
+        netThread.name = "Net Thread"
+        netThread.isDaemon = true
+        netThread.start()
+
         Logger.log("UI", "Starting Net...")
     }
 }

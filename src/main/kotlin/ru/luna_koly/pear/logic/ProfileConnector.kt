@@ -1,14 +1,10 @@
 package ru.luna_koly.pear.logic
 
-import ru.luna_koly.pear.json.Json
+import ru.luna_koly.json.Json
 import ru.luna_koly.pear.net.connection.Connection
 
 class ProfileConnector(val profile: Profile) {
-    private var lastBoundConnection: Connection? = null
-
-    fun setLastBoundConnection(connection: Connection) {
-        lastBoundConnection = connection
-    }
+    var lastBoundConnection: Connection? = null
 
     fun send(message: String) {
         lastBoundConnection?.sendString(Json.dictionary {
@@ -18,11 +14,6 @@ class ProfileConnector(val profile: Profile) {
     }
 
     override fun toString(): String {
-        return "ProfileConnector {${
-            profile.identity.encoded
-                .toString(Charsets.UTF_8)
-                .substring(0, 10)
-                .replace("\n", "")
-        }}"
+        return profile.toString()
     }
 }

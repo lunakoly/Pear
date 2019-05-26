@@ -1,4 +1,4 @@
-package ru.luna_koly.pear.json
+package ru.luna_koly.json
 
 /**
  * Holds functionality needed

@@ -1,4 +1,4 @@
-package ru.luna_koly.pear.ui
+package ru.luna_koly.pear.components
 
 import javafx.beans.property.SimpleStringProperty
 import ru.luna_koly.pear.util.Logger
@@ -32,7 +32,7 @@ class TerminalView : View() {
 
     init {
         subscribe<ConnectionEstablishedEvent> {
-            Logger.log("UI", "Connection Established with ${it.connection}")
+            Logger.log("UI", "Connection Established with ${it.profileConnector.profile.name}")
         }
 
         subscribe<ru.luna_koly.pear.events.MessageEvent> {
@@ -42,5 +42,8 @@ class TerminalView : View() {
 
     fun log(message: String) {
         userOutput.text += message + '\n'
+        // scroll down
+        userOutput.selectEnd()
+        userOutput.deselect()
     }
 }

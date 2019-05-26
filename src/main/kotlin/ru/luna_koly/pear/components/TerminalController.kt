@@ -1,8 +1,7 @@
-package ru.luna_koly.pear.ui
+package ru.luna_koly.pear.components
 
 import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.events.ConnectionRequest
-import ru.luna_koly.pear.net.Net
 import tornadofx.Controller
 import tornadofx.isInt
 
@@ -25,7 +24,7 @@ class TerminalController : Controller() {
                 synchronized(DataBase.profiles) {
                     view.log(
                         DataBase.profiles
-                            .mapIndexed { index, it -> "$index - $it" }
+                            .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
                 }
@@ -35,7 +34,7 @@ class TerminalController : Controller() {
                 synchronized(DataBase.profileConnectors) {
                     view.log(
                         DataBase.profileConnectors
-                            .mapIndexed { index, it -> "$index - $it" }
+                            .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
                 }

@@ -1,8 +1,10 @@
-package ru.luna_koly.pear.net
+package ru.luna_koly.pear.components
 
 import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.events.*
-import ru.luna_koly.pear.json.JsonParser
+import ru.luna_koly.json.JsonParser
+import ru.luna_koly.pear.logic.ProfileConnector
+import ru.luna_koly.pear.net.Protocol
 import ru.luna_koly.pear.net.connection.Connection
 import tornadofx.Controller
 import java.net.InetSocketAddress
@@ -19,17 +21,10 @@ import kotlin.collections.HashMap
  * It's marked as Controller() merely
  * to allow interaction with EventBus
  */
-class Net : Controller() {
+class Net : Controller(), Runnable {
     companion object {
         const val DEFAULT_PORT = 1234
     }
-
-    /**
-     * Manages sockets both created via incoming
-     * connection requests and outgoing ones
-     */
-    private val selector: Selector = Selector.open()
-    private val serverSocket: ServerSocketChannel = ServerSocketChannel.open()
 
     /**
      * They will be registered on the
@@ -41,14 +36,48 @@ class Net : Controller() {
      * Used to pass the received data to the
      * proper receiver
      */
-    private val connections = HashMap<SocketChannel, Connection>()
+    private val connections = HashMap<SocketChannel, ProfileConnector>()
 
     /**
-     * Net Thread that runs selector and
-     * manages its events
+     * Adds socket to the register queue
+     * so that it'll be registered as soon
+     * as current selector events are processed
      */
-    private val serverThread = Thread {
-        // configure server
+    private fun register(socket: SocketChannel, profileConnector: ProfileConnector) {
+        synchronized(registerQueue) {
+            registerQueue.add(socket)
+        }
+
+        synchronized(connections) {
+            connections[socket] = profileConnector
+        }
+    }
+
+    /**
+     * Manages sockets both created via incoming
+     * connection requests and outgoing ones
+     */
+    private val selector: Selector = Selector.open()
+    private val serverSocket: ServerSocketChannel = ServerSocketChannel.open()
+
+    /**
+     * Registers all sockets within the selector
+     * and clears registerQueue
+     */
+    private fun registerPendingSockets() {
+        synchronized(registerQueue) {
+            registerQueue.forEach {
+                it.configureBlocking(false)
+                it.register(selector, SelectionKey.OP_READ)
+            }
+            registerQueue.clear()
+        }
+    }
+
+    /**
+     * Basic setup
+     */
+    private fun configureServer() {
         serverSocket.configureBlocking(false)
         serverSocket.socket().bind(InetSocketAddress(DEFAULT_PORT))
         serverSocket.register(selector, SelectionKey.OP_ACCEPT)
@@ -56,67 +85,56 @@ class Net : Controller() {
             "Net",
             "Server started on port `$DEFAULT_PORT`"
         )
+    }
 
-        // run server checkout loop
+    /**
+     * Runs selector and manages its events
+     */
+    override fun run() {
+        configureServer()
+
         while (serverSocket.isOpen) {
-            synchronized(registerQueue) {
-                registerQueue.forEach {
-                    it.configureBlocking(false)
-                    it.register(selector, SelectionKey.OP_READ)
-                }
-                registerQueue.clear()
-            }
+            registerPendingSockets()
 
             if (selector.selectNow() == 0)
                 continue
 
             val selection = selector.selectedKeys()
 
-            for (that in selection)
+            for (that in selection) {
                 when {
                     that.isAcceptable -> onClientAccepted((that.channel() as ServerSocketChannel).accept())
                     that.isReadable -> onDataReceived(that.channel() as SocketChannel)
                 }
+            }
 
             selection.clear()
         }
     }
 
-    /**
-     * Adds socket to the register queue
-     * so that it'll be registered as soon
-     * as current selector events are processed
-     */
-    private fun register(socket: SocketChannel, connection: Connection) {
-        synchronized(registerQueue) {
-            registerQueue.add(socket)
-        }
-
-        synchronized(connections) {
-            connections[socket] = connection
-        }
-    }
-
     private fun onClientAccepted(socket: SocketChannel) {
         val connection = Connection(socket)
+        val profileConnector = Protocol.acceptClient(connection)
 
-        if (Protocol.acceptClient(connection)) {
+        if (profileConnector != null) {
             Logger.log(
                 "Net",
                 "Server accepted new socket from address `${socket.socket().inetAddress.hostName}`"
             )
 
-            register(socket, connection)
-            fire(ConnectionEstablishedEvent(connection))
+            register(socket, profileConnector)
+            fire(ConnectionEstablishedEvent(profileConnector))
         }
     }
 
     private fun onDataReceived(socket: SocketChannel) {
-        val connection: Connection
+        val profileConnector: ProfileConnector
 
         synchronized(connections) {
-            connection = connections[socket] ?: return
+            profileConnector = connections[socket] ?: return
         }
+
+        val connection = profileConnector.lastBoundConnection ?: return
 
         try {
             val content = JsonParser.parse(connection.readString())
@@ -131,16 +149,6 @@ class Net : Controller() {
         subscribe<ConnectionRequest> {
             onConnectionRequested(it)
         }
-
-        subscribe<ServerStartRequest> {
-            onServerStartRequested()
-        }
-    }
-
-    private fun onServerStartRequested() {
-        serverThread.name = "Net Thread"
-        serverThread.isDaemon = true
-        serverThread.start()
     }
 
     private fun onConnectionRequested(event: ConnectionRequest) {
@@ -158,9 +166,11 @@ class Net : Controller() {
             "Client requested > Address `${event.address}` and port `$DEFAULT_PORT`"
         )
 
-        if (Protocol.acceptServer(connection)) {
-            register(socket, connection)
-            fire(ConnectionEstablishedEvent(connection))
+        val profileConnector = Protocol.acceptServer(connection)
+
+        if (profileConnector != null) {
+            register(socket, profileConnector)
+            fire(ConnectionEstablishedEvent(profileConnector))
         }
     }
 }

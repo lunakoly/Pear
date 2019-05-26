@@ -1,11 +1,11 @@
-package ru.luna_koly.pear.json
+package ru.luna_koly.json
 
-import ru.luna_koly.pear.json.JsonLexer.Fetcher
-import ru.luna_koly.pear.json.JsonLexer.scan
-import ru.luna_koly.pear.json.JsonLexer.scanFloat
-import ru.luna_koly.pear.json.JsonLexer.scanKeyword
-import ru.luna_koly.pear.json.JsonLexer.scanNonBlank
-import ru.luna_koly.pear.json.JsonLexer.scanString
+import ru.luna_koly.json.JsonLexer.Fetcher
+import ru.luna_koly.json.JsonLexer.scan
+import ru.luna_koly.json.JsonLexer.scanFloat
+import ru.luna_koly.json.JsonLexer.scanKeyword
+import ru.luna_koly.json.JsonLexer.scanNonBlank
+import ru.luna_koly.json.JsonLexer.scanString
 import kotlin.math.max
 import kotlin.math.min
 

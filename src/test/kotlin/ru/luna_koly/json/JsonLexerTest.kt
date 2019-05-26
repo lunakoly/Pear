@@ -1,7 +1,8 @@
-package ru.luna_koly.pear.json
+package ru.luna_koly.json
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import ru.luna_koly.json.JsonLexer
 
 internal class JsonLexerTest {
     @Test

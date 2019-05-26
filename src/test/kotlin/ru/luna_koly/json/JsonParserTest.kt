@@ -1,8 +1,9 @@
-package ru.luna_koly.pear.json
+package ru.luna_koly.json
 
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
+import ru.luna_koly.json.JsonParser
 
 internal class JsonParserTest {
     @Test
