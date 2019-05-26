@@ -11,7 +11,7 @@ class ProfileConnector(val profile: Profile) {
     }
 
     fun send(message: String) {
-        lastBoundConnection?.sendString(Json.Dictionary {
+        lastBoundConnection?.sendString(Json.dictionary {
             item("command", "message")
             item("text", message)
         }.toString())

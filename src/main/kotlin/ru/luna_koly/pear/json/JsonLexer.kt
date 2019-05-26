@@ -185,16 +185,20 @@ object JsonLexer {
      * Actually this thing is language-specific.
      * Maybe I should put it somewhere else
      */
-    private fun readOperator(out: Fetcher): Boolean {
+    private fun readNonOperator(out: Fetcher): Boolean {
         if (
-            out.index >= out.text.length ||
-            out.text[out.index] in 'a'..'z' ||
-            out.text[out.index] in 'A'..'Z'
-        ) return false
+            out.index < out.text.length &&
+            (
+                    out.text[out.index] in 'a'..'z' ||
+                    out.text[out.index] in 'A'..'Z'
+            )
+        ) {
+            out.value.append(out.text[out.index])
+            out.index++
+            return true
+        }
 
-        out.value.append(out.text[out.index])
-        out.index++
-        return true
+        return false
     }
 
     /**
@@ -208,7 +212,7 @@ object JsonLexer {
         if (!read(token, local))
             return false
 
-        if (readOperator(local))
+        if (readNonOperator(local))
             return false
 
         out.fetch(local)

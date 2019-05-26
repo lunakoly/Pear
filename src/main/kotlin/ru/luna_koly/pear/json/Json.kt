@@ -37,11 +37,7 @@ object Json {
     /**
      * Wrapper for List
      */
-    class List(setup: (List.() -> Unit)? = null) : ArrayList<Object>(), Object {
-        init {
-            setup?.invoke(this)
-        }
-
+    class List : ArrayList<Object>(), Object {
         override fun toString(): String {
             return '[' + joinToString(", ") { it.toString() } + ']'
         }
@@ -55,22 +51,18 @@ object Json {
         }
 
         fun list(setup: (List.() -> Unit)) {
-            super.add(List(setup))
+            super.add(List().apply(setup))
         }
 
         fun dictionary(setup: (Dictionary.() -> Unit)) {
-            super.add(Dictionary(setup))
+            super.add(Dictionary().apply(setup))
         }
     }
 
     /**
      * Wrapper for Dictionary
      */
-    class Dictionary(setup: (Dictionary.() -> Unit)? = null) : HashMap<String, Object>(), Object {
-        init {
-            setup?.invoke(this)
-        }
-
+    class Dictionary : HashMap<String, Object>(), Object {
         override fun toString(): String {
             return '{' +
                     this
@@ -88,11 +80,14 @@ object Json {
         }
 
         fun list(key: String, setup: (List.() -> Unit)) {
-            super.put(key, List(setup))
+            super.put(key, List().apply(setup))
         }
 
         fun dictionary(key: String, setup: (Dictionary.() -> Unit)) {
-            super.put(key, Dictionary(setup))
+            super.put(key, Dictionary().apply(setup))
         }
     }
+
+    fun dictionary(setup: Dictionary.() -> Unit) = Dictionary().apply(setup)
+    fun list(setup: List.() -> Unit) = List().apply(setup)
 }
