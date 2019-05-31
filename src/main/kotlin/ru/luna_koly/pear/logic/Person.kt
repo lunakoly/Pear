@@ -10,8 +10,8 @@ import java.security.PublicKey
  */
 open class Person(
     val identity: PublicKey,
-    val name: String = "Someone",
-    val info: String = "",
+    var name: String = "Someone",
+    var info: String = "",
     var avatarLocation: String = ""
 ) {
     /**

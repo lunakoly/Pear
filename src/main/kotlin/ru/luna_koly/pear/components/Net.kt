@@ -1,16 +1,16 @@
 package ru.luna_koly.pear.components
 
-import ru.luna_koly.pear.util.Logger
-import ru.luna_koly.pear.events.*
-import ru.luna_koly.json.JsonParser
+import ru.luna_koly.pear.events.ConnectionEstablishedEvent
+import ru.luna_koly.pear.events.ConnectionRequest
 import ru.luna_koly.pear.logic.ProfileConnector
-import ru.luna_koly.pear.net.Protocol
-import ru.luna_koly.pear.net.connection.Connection
+import ru.luna_koly.pear.net.connection.ChannelConnection
+import ru.luna_koly.pear.net.protocol.Protocol
+import ru.luna_koly.pear.net.request_analyzer.Analyser
+import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
 import java.net.InetSocketAddress
 import java.nio.channels.*
-import java.util.*
-import kotlin.collections.HashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Performs network requests when corresponding
@@ -26,17 +26,17 @@ class Net : Controller(), Runnable {
         const val DEFAULT_PORT = 1234
     }
 
-    /**
-     * They will be registered on the
-     * next Net thread loop cycle
-     */
-    private val registerQueue = LinkedList<SocketChannel>()
+    internal val analyzer: Analyser by params
+    internal val protocol: Protocol by params
 
     /**
-     * Used to pass the received data to the
+     * They will be registered on the
+     * next Net thread loop cycle.
+     * ProfileConnector is used to pass
+     * the received data to the
      * proper receiver
      */
-    private val connections = HashMap<SocketChannel, ProfileConnector>()
+    private val registerQueue = ConcurrentLinkedQueue<Pair<SocketChannel, ProfileConnector>>()
 
     /**
      * Adds socket to the register queue
@@ -44,13 +44,7 @@ class Net : Controller(), Runnable {
      * as current selector events are processed
      */
     private fun register(socket: SocketChannel, profileConnector: ProfileConnector) {
-        synchronized(registerQueue) {
-            registerQueue.add(socket)
-        }
-
-        synchronized(connections) {
-            connections[socket] = profileConnector
-        }
+        registerQueue.add(socket to profileConnector)
     }
 
     /**
@@ -65,13 +59,12 @@ class Net : Controller(), Runnable {
      * and clears registerQueue
      */
     private fun registerPendingSockets() {
-        synchronized(registerQueue) {
-            registerQueue.forEach {
-                it.configureBlocking(false)
-                it.register(selector, SelectionKey.OP_READ)
-            }
-            registerQueue.clear()
+        registerQueue.forEach {
+            it.first.configureBlocking(false)
+            val key= it.first.register(selector, SelectionKey.OP_READ)
+            key.attach(it.second)
         }
+        registerQueue.clear()
     }
 
     /**
@@ -96,15 +89,15 @@ class Net : Controller(), Runnable {
         while (serverSocket.isOpen) {
             registerPendingSockets()
 
-            if (selector.selectNow() == 0)
+            if (selector.select(500) == 0)
                 continue
 
             val selection = selector.selectedKeys()
 
             for (that in selection) {
                 when {
-                    that.isAcceptable -> onClientAccepted((that.channel() as ServerSocketChannel).accept())
-                    that.isReadable -> onDataReceived(that.channel() as SocketChannel)
+                    that.isAcceptable -> onClientAccepted(that)
+                    that.isReadable -> onDataReceived(that)
                 }
             }
 
@@ -112,9 +105,10 @@ class Net : Controller(), Runnable {
         }
     }
 
-    private fun onClientAccepted(socket: SocketChannel) {
-        val connection = Connection(socket)
-        val profileConnector = Protocol.acceptClient(connection)
+    private fun onClientAccepted(key: SelectionKey) {
+        val socket = (key.channel() as ServerSocketChannel).accept()
+        val connection = ChannelConnection(socket)
+        val profileConnector = protocol.acceptClient(connection)
 
         if (profileConnector != null) {
             Logger.log(
@@ -127,22 +121,10 @@ class Net : Controller(), Runnable {
         }
     }
 
-    private fun onDataReceived(socket: SocketChannel) {
-        val profileConnector: ProfileConnector
-
-        synchronized(connections) {
-            profileConnector = connections[socket] ?: return
-        }
-
+    private fun onDataReceived(key: SelectionKey) {
+        val profileConnector = key.attachment() as ProfileConnector
         val connection = profileConnector.lastBoundConnection ?: return
-
-        try {
-            val content = JsonParser.parse(connection.readString())
-            val messageEvent = MessageEvent(content["text"].value)
-            fire(messageEvent)
-        } catch (e: Exception) {
-            Logger.log("Net", "Error > Invalid message received")
-        }
+        analyzer.analyze(connection)
     }
 
     init {
@@ -152,8 +134,8 @@ class Net : Controller(), Runnable {
     }
 
     private fun onConnectionRequested(event: ConnectionRequest) {
-        val socket =  SocketChannel.open()
-        val connection = Connection(socket)
+        val socket = SocketChannel.open()
+        val connection = ChannelConnection(socket)
 
         try {
             socket.connect(InetSocketAddress(event.address, DEFAULT_PORT))
@@ -166,7 +148,7 @@ class Net : Controller(), Runnable {
             "Client requested > Address `${event.address}` and port `$DEFAULT_PORT`"
         )
 
-        val profileConnector = Protocol.acceptServer(connection)
+        val profileConnector = protocol.acceptServer(connection)
 
         if (profileConnector != null) {
             register(socket, profileConnector)

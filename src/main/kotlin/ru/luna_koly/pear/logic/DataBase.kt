@@ -1,10 +1,12 @@
 package ru.luna_koly.pear.logic
 
-import ru.luna_koly.pear.net.Cryptor
+import ru.luna_koly.pear.net.cryptor.ClientCryptor
+import ru.luna_koly.pear.net.cryptor.Cryptor
+import tornadofx.Controller
 import java.io.File
 import java.security.PublicKey
 
-object DataBase {
+class DataBase : Controller() {
     val profiles = ArrayList<Profile>()
     val profileConnectors = ArrayList<ProfileConnector>()
 
@@ -34,6 +36,9 @@ object DataBase {
         }
     }
 
+    val cryptor: Cryptor = ClientCryptor()
+    val user: Person
+
     init {
         val pearDirectory = File(System.getProperty("user.home"), ".pear")
 
@@ -46,6 +51,8 @@ object DataBase {
 
         }
 
-        profiles.add(Profile(Cryptor.publicKey))
+        val userProfile = Profile(cryptor.getIdentity())
+        profiles.add(userProfile)
+        user = userProfile
     }
 }

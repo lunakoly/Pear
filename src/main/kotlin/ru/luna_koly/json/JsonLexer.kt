@@ -3,7 +3,7 @@ package ru.luna_koly.json
 /**
  * 'C-Style' lexical analyzer that
  * implements common functionality
- * required to parse any syntax
+ * required to analyze any syntax
  */
 @Suppress("MemberVisibilityCanBePrivate")
 object JsonLexer {
@@ -46,7 +46,7 @@ object JsonLexer {
     }
 
     /**
-     * Returns true if it manages to read
+     * Returns true if it manages to analyze
      * something before reaching whitespaces.
      * Moves index forward and appends content
      * to value

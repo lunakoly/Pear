@@ -7,6 +7,7 @@ import tornadofx.isInt
 
 class TerminalController : Controller() {
     private val view: TerminalView by inject()
+    private val dataBase: DataBase by inject()
 
     private fun tryRaiseConnection(args: List<String>) {
         when {
@@ -21,9 +22,9 @@ class TerminalController : Controller() {
             args.size < 2 -> view.log("Usage > list (profiles | connectors)")
 
             args[1] == "profiles" -> {
-                synchronized(DataBase.profiles) {
+                synchronized(dataBase.profiles) {
                     view.log(
-                        DataBase.profiles
+                        dataBase.profiles
                             .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
@@ -31,9 +32,9 @@ class TerminalController : Controller() {
             }
 
             args[1] == "connectors" -> {
-                synchronized(DataBase.profileConnectors) {
+                synchronized(dataBase.profileConnectors) {
                     view.log(
-                        DataBase.profileConnectors
+                        dataBase.profileConnectors
                             .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
@@ -54,7 +55,7 @@ class TerminalController : Controller() {
 
             else -> {
                 val id = args[1].toInt()
-                val profile = DataBase.profileConnectors.getOrNull(id)
+                val profile = dataBase.profileConnectors.getOrNull(id)
 
                 if (profile == null) {
                     view.log("Error > $id is not a valid profile id")
@@ -64,6 +65,15 @@ class TerminalController : Controller() {
                 val message = args.subList(2, args.size).joinToString(" ")
                 profile.send(message)
             }
+        }
+    }
+
+    private fun trySet(args: List<String>) {
+        when {
+            args.size < 3 -> view.log("Usage > set <field> <value>")
+            args[1] == "name" -> dataBase.user.name = args[2]
+            args[1] == "info" -> dataBase.user.info = args[2]
+            else -> view.log("Error > field ${args[1]} does not exist")
         }
     }
 
@@ -79,6 +89,7 @@ class TerminalController : Controller() {
             "connect" -> tryRaiseConnection(args)
             "list" -> list(args)
             "send" -> trySend(args)
+            "set" -> trySet(args)
             "exit" -> view.close()
             else -> view.log("Could not find command `${args[0]}`")
         }

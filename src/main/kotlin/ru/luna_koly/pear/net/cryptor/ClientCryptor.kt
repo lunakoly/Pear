@@ -1,4 +1,4 @@
-package ru.luna_koly.pear.net
+package ru.luna_koly.pear.net.cryptor
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -9,12 +9,14 @@ import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
-import kotlin.random.Random
 
-object Cryptor {
+/**
+ * Implements main functionality
+ */
+class ClientCryptor : Cryptor {
     private val cipher: Cipher = Cipher.getInstance("RSA")
 
-    fun encrypt(data: ByteArray, publicKey: PublicKey): ByteArray {
+    override fun encrypt(data: ByteArray, publicKey: PublicKey): ByteArray {
         cipher.init(Cipher.ENCRYPT_MODE, publicKey)
         return cipher.doFinal(data)
     }
@@ -24,9 +26,7 @@ object Cryptor {
         return cipher.doFinal(data)
     }
 
-    fun generateSecret() = Random.nextBytes(20)
-
-    fun toPublicKey(data: ByteArray): PublicKey {
+    override fun toPublicKey(data: ByteArray): PublicKey {
         return KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(data))
     }
 
@@ -34,10 +34,12 @@ object Cryptor {
         return KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(data))
     }
 
-    var publicKey: PublicKey
+    private var publicKey: PublicKey
     private var privateKey: PrivateKey
 
-    fun decrypt(data: ByteArray) = decrypt(data, privateKey)
+    override fun getIdentity() = publicKey
+
+    override fun decrypt(data: ByteArray) = decrypt(data, privateKey)
 
     init {
         val publicKeyPath = Paths.get(System.getProperty("user.home"), ".pear", "public_key")

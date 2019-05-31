@@ -32,7 +32,7 @@ class TerminalView : View() {
 
     init {
         subscribe<ConnectionEstablishedEvent> {
-            Logger.log("UI", "Connection Established with ${it.profileConnector.profile.name}")
+            Logger.log("UI", "ChannelConnection Established with ${it.profileConnector.profile.name}")
         }
 
         subscribe<ru.luna_koly.pear.events.MessageEvent> {
