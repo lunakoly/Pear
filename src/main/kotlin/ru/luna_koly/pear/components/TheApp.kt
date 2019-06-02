@@ -1,23 +1,31 @@
 package ru.luna_koly.pear.components
 
+import javafx.scene.Scene
 import ru.luna_koly.pear.logic.DataBase
+import ru.luna_koly.pear.net.analyzer.RequestAnalyzer
 import ru.luna_koly.pear.net.protocol.IdentityValidationProtocol
-import ru.luna_koly.pear.net.request_analyzer.RequestAnalyzer
 import ru.luna_koly.pear.util.Logger
 import tornadofx.App
 import tornadofx.FX
+import tornadofx.UIComponent
 import tornadofx.find
 
 class TheApp : App(TerminalView::class) {
+    override fun createPrimaryScene(view: UIComponent) = Scene(view.root, 800.0, 600.0)
+
     init {
         // initialize DataBase
         val dataBase = find(DataBase::class)
 
-        // access main protocol
-        val protocol = IdentityValidationProtocol(dataBase)
-
         // access main request parser
-        val analyzer = find(RequestAnalyzer::class)
+        val analyzer = find(
+            RequestAnalyzer::class,
+            FX.defaultScope,
+            RequestAnalyzer::dataBase to dataBase
+        )
+
+        // access main protocol
+        val protocol = IdentityValidationProtocol(dataBase, analyzer)
 
         // initialize Net component
         val net = find(

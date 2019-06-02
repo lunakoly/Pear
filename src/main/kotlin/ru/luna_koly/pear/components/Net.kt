@@ -3,9 +3,9 @@ package ru.luna_koly.pear.components
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
 import ru.luna_koly.pear.events.ConnectionRequest
 import ru.luna_koly.pear.logic.ProfileConnector
+import ru.luna_koly.pear.net.analyzer.Analyser
 import ru.luna_koly.pear.net.connection.ChannelConnection
 import ru.luna_koly.pear.net.protocol.Protocol
-import ru.luna_koly.pear.net.request_analyzer.Analyser
 import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
 import java.net.InetSocketAddress
@@ -116,6 +116,7 @@ class Net : Controller(), Runnable {
                 "Server accepted new socket from address `${socket.socket().inetAddress.hostName}`"
             )
 
+            profileConnector.updateInfo()
             register(socket, profileConnector)
             fire(ConnectionEstablishedEvent(profileConnector))
         }
@@ -123,8 +124,10 @@ class Net : Controller(), Runnable {
 
     private fun onDataReceived(key: SelectionKey) {
         val profileConnector = key.attachment() as ProfileConnector
-        val connection = profileConnector.lastBoundConnection ?: return
-        analyzer.analyze(connection)
+
+        profileConnector.lastBoundConnection?.let {
+            analyzer.analyze(it, profileConnector.profile)
+        }
     }
 
     init {
@@ -151,6 +154,7 @@ class Net : Controller(), Runnable {
         val profileConnector = protocol.acceptServer(connection)
 
         if (profileConnector != null) {
+            profileConnector.updateInfo()
             register(socket, profileConnector)
             fire(ConnectionEstablishedEvent(profileConnector))
         }

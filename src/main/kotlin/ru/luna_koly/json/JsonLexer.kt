@@ -53,6 +53,7 @@ object JsonLexer {
      */
     private fun readNonBlank(out: Fetcher): Boolean {
         if (
+            out.index >= out.text.length ||
             out.text[out.index] == '\n' ||
             out.text[out.index] == '\t' ||
             out.text[out.index] == ' '
@@ -78,13 +79,18 @@ object JsonLexer {
      * Reads decimal numbers sequence
      */
     private fun readDecimal(out: Fetcher): Boolean {
-        if (out.text[out.index] !in '0'..'9')
-            return false
+        if (
+            out.index >= out.text.length ||
+            out.text[out.index] !in '0'..'9'
+        ) return false
 
         out.value.append(out.text[out.index])
         out.index++
 
-        while (out.text[out.index] in '0'..'9') {
+        while (
+            out.index < out.text.length &&
+            out.text[out.index] in '0'..'9'
+        ) {
             out.value.append(out.text[out.index])
             out.index++
         }
@@ -157,8 +163,10 @@ object JsonLexer {
      * removes quotes
      */
     private fun readString(out: Fetcher): Boolean {
-        if (out.text[out.index] != '"')
-            return false
+        if (
+            out.index >= out.text.length ||
+            out.text[out.index] != '"'
+        ) return false
 
         out.index++
         val local = Fetcher(out)
@@ -182,16 +190,14 @@ object JsonLexer {
     /**
      * Reads character that is not a part
      * of any common operator
-     * Actually this thing is language-specific.
-     * Maybe I should put it somewhere else
      */
     private fun readNonOperator(out: Fetcher): Boolean {
+        if (out.index >= out.text.length)
+            return false
+
         if (
-            out.index < out.text.length &&
-            (
-                    out.text[out.index] in 'a'..'z' ||
-                    out.text[out.index] in 'A'..'Z'
-            )
+            out.text[out.index] in 'a'..'z' ||
+            out.text[out.index] in 'A'..'Z'
         ) {
             out.value.append(out.text[out.index])
             out.index++
@@ -225,9 +231,12 @@ object JsonLexer {
      */
     private fun skipBlank(out: Fetcher) {
         while (
-            out.text[out.index] == '\n' ||
-            out.text[out.index] == '\t' ||
-            out.text[out.index] == ' '
+            out.index < out.text.length &&
+            (
+                out.text[out.index] == '\n' ||
+                out.text[out.index] == '\t' ||
+                out.text[out.index] == ' '
+            )
         ) out.index++
     }
 

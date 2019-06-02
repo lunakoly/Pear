@@ -10,7 +10,7 @@ import java.nio.channels.ByteChannel
  */
 class ChannelConnection(private val channel: ByteChannel) : Connection {
     companion object {
-        const val CHUNK_CAPACITY = 48
+        const val CHUNK_CAPACITY: Byte = 48
     }
 
     override var protector: Protector = TrivialProtector()
@@ -19,10 +19,11 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
      * Sends a package containing parameters byte and
      * part of data described via offset and length
      */
-    private fun sendRawChunk(data: ByteArray, offset: Int, length: Int, parameters: Int) {
-        val buffer = ByteBuffer.allocate(length + 1)
+    private fun sendRawChunk(data: ByteArray, offset: Int, length: Byte, parameters: Int) {
+        val buffer = ByteBuffer.allocate(2 + length)
+        buffer.put(length)
         buffer.put(parameters.toByte())
-        buffer.put(data, offset, length)
+        buffer.put(data, offset, length.toInt())
         buffer.flip()
 
         do {
@@ -46,10 +47,14 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
             offset += CHUNK_CAPACITY
         }
 
-        sendRawChunk(data, offset, data.size - offset, PackageParameters.NOTHING)
+        sendRawChunk(data, offset, (data.size - offset).toByte(), PackageParameters.NOTHING)
     }
 
-    override fun sendBytes(data: ByteArray) = sendRawBytes(protector.encrypt(data))
+    override fun sendBytes(data: ByteArray) {
+        synchronized(channel) {
+            sendRawBytes(protector.encrypt(data))
+        }
+    }
 
     /**
      * Caches incoming ByteArray data and helps to
@@ -59,16 +64,47 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
     private val cache = ByteCache()
 
     /**
+     * Reads part of package that contains it's
+     * data length
+     */
+    private fun extractLength(channel: ByteChannel): Int {
+        val buffer = ByteBuffer.allocate(1)
+
+        if (channel.read(buffer) <= 0)
+            return 0
+
+        buffer.flip()
+        return buffer.get().toInt()
+    }
+
+    /**
+     * Reads part of package that contains it's
+     * parameters
+     */
+    private fun extractParameters(channel: ByteChannel): Int {
+        val buffer = ByteBuffer.allocate(1)
+
+        if (channel.read(buffer) <= 0)
+            return 0
+
+        buffer.flip()
+        return buffer.get().toInt()
+    }
+
+    /**
      * Accepts ByteArray coming from the socket. Due to
      * the fact that data may be passed as several packages,
      * it will automatically be reconstructed via headerCache
      */
     private fun readRawBytes(): ByteArray {
-        val buffer = ByteBuffer.allocate(CHUNK_CAPACITY + 1)
         var headerLength = 0
         cache.clear()
 
         do {
+            val length = extractLength(channel)
+            val parameters = extractParameters(channel)
+            val buffer = ByteBuffer.allocate(length)
+
             // if got something
             val bytesRead = channel.read(buffer)
 
@@ -77,11 +113,8 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
 
             buffer.flip()
 
-            // accept parameters & other data
-            val parameters = buffer.get().toInt()
-
             // put data into a list ByteArray item
-            val data = ByteArray(buffer.limit() - 1)
+            val data = ByteArray(buffer.limit())
             var index = 0
 
             while (buffer.hasRemaining()) {
@@ -91,7 +124,6 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
 
             headerLength += data.size
             cache.add(data)
-            buffer.clear()
 
             // if there's something further
         } while (parameters.provide(PackageParameters.HAS_NEXT))
@@ -100,5 +132,13 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
         return cache.concat()
     }
 
-    override fun readBytes() = protector.decrypt(readRawBytes())
+    override fun readBytes(): ByteArray {
+//        println("===================< RECEIVED >===================")
+//        println("[RAW]: " + raw.toString(Charsets.UTF_8))
+//        println("[DECODED]: " + data.toString(Charsets.UTF_8))
+//        println("")
+        synchronized(channel) {
+            return protector.decrypt(readRawBytes())
+        }
+    }
 }

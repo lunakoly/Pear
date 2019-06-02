@@ -17,13 +17,17 @@ class ClientCryptor : Cryptor {
     private val cipher: Cipher = Cipher.getInstance("RSA")
 
     override fun encrypt(data: ByteArray, publicKey: PublicKey): ByteArray {
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey)
-        return cipher.doFinal(data)
+        synchronized(cipher) {
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+            return cipher.doFinal(data)
+        }
     }
 
     private fun decrypt(data: ByteArray, privateKey: PrivateKey): ByteArray {
-        cipher.init(Cipher.DECRYPT_MODE, privateKey)
-        return cipher.doFinal(data)
+        synchronized(cipher) {
+            cipher.init(Cipher.DECRYPT_MODE, privateKey)
+            return cipher.doFinal(data)
+        }
     }
 
     override fun toPublicKey(data: ByteArray): PublicKey {

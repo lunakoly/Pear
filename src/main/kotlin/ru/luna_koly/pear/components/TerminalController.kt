@@ -47,7 +47,7 @@ class TerminalController : Controller() {
         }
     }
 
-    private fun trySend(args: List<String>) {
+    private fun send(args: List<String>) {
         when {
             args.size < 2 -> view.log("Usage > send <profile id> word1 [,word2...]")
             !args[1].isInt() -> view.log("Error > profile id must be an integer")
@@ -63,17 +63,44 @@ class TerminalController : Controller() {
                 }
 
                 val message = args.subList(2, args.size).joinToString(" ")
-                profile.send(message)
+                profile.sendMessage(message)
             }
         }
     }
 
-    private fun trySet(args: List<String>) {
+    private fun set(args: List<String>) {
         when {
             args.size < 3 -> view.log("Usage > set <field> <value>")
-            args[1] == "name" -> dataBase.user.name = args[2]
-            args[1] == "info" -> dataBase.user.info = args[2]
+
+            args[1] == "name" -> {
+                dataBase.user.name = args[2]
+                dataBase.profileConnectors.forEach {
+                    it.sendInfoUpdatedNotification()
+                }
+            }
+
+            args[1] == "info" -> {
+                dataBase.user.info = args[2]
+                dataBase.profileConnectors.forEach {
+                    it.sendInfoUpdatedNotification()
+                }
+            }
+
             else -> view.log("Error > field ${args[1]} does not exist")
+        }
+    }
+
+    private fun update(args: List<String>) {
+        when {
+            args.size < 2 -> view.log("Usage > update info <profile id>")
+
+            args[1] == "info" -> {
+                if (args.size < 3)
+                    view.log("Usage > update info <profile id>")
+                else {
+                    dataBase.profileConnectors.getOrNull(args[2].toInt())?.updateInfo()
+                }
+            }
         }
     }
 
@@ -88,8 +115,9 @@ class TerminalController : Controller() {
         when (args[0]) {
             "connect" -> tryRaiseConnection(args)
             "list" -> list(args)
-            "send" -> trySend(args)
-            "set" -> trySet(args)
+            "send" -> send(args)
+            "set" -> set(args)
+            "update" -> update(args)
             "exit" -> view.close()
             else -> view.log("Could not find command `${args[0]}`")
         }

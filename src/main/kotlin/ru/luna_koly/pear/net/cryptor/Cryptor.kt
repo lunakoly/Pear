@@ -21,7 +21,7 @@ interface Cryptor {
      * Returns some random byte array value
      * used to check whether opponent is able
      * to decrypt the message destined for them
-     * and send it back to us
+     * and sendMessage it back to us
      */
     fun generateSecret() = Random.nextBytes(20)
 

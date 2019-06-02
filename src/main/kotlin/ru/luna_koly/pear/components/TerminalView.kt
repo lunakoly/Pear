@@ -5,7 +5,7 @@ import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
 import tornadofx.*
 
-class TerminalView : View() {
+class TerminalView : View("Pear | Terminal") {
     private val controller: TerminalController by inject()
     private val inputText = SimpleStringProperty()
 
@@ -36,7 +36,7 @@ class TerminalView : View() {
         }
 
         subscribe<ru.luna_koly.pear.events.MessageEvent> {
-            Logger.log("UI", "Message > ${it.text}")
+            Logger.log("UI", "Message > ${it.author.name} > ${it.text}")
         }
     }
 
