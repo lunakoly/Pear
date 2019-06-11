@@ -42,7 +42,7 @@ class ConnectionPopup : Fragment() {
             }
 
             inner.action {
-                val target = if (status.text.isEmpty()) "127.0.0.1" else inner.text
+                val target = if (status.text.isBlank()) "127.0.0.1" else inner.text
                 inner.isDisable = true
                 status.text = "Connecting..."
                 fire(ConnectionRequest(target))

@@ -1,8 +1,10 @@
 package ru.luna_koly.pear.net.connection
 
 import ru.luna_koly.pear.util.ByteCache
+import ru.luna_koly.pear.util.Logger
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
+import java.util.*
 
 /**
  * Allows to easily analyze data from
@@ -26,9 +28,15 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
         buffer.put(data, offset, length.toInt())
         buffer.flip()
 
+        Logger.log("...", "SENDING: chunk of size $length")
+        Logger.log("...", "SENDING: chunk has next ${parameters.provide(PackageParameters.HAS_NEXT)}")
+
         do {
             val bytesWritten = channel.write(buffer)
+            Logger.log("...", "SENDING: bytesWritten $bytesWritten")
         } while (bytesWritten > 0)
+
+        Logger.log("...", "SENDING: chunk sent")
     }
 
     /**
@@ -40,6 +48,8 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
         var offset = 0
 
         while (offset < data.size - CHUNK_CAPACITY) {
+            Logger.log("...", "SENDING: intermediate $offset-${offset + CHUNK_CAPACITY} of ${data.size}")
+
             sendRawChunk(data, offset,
                 CHUNK_CAPACITY,
                 PackageParameters.HAS_NEXT
@@ -47,13 +57,25 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
             offset += CHUNK_CAPACITY
         }
 
+        Logger.log("...", "SENDING: last $offset-${offset + CHUNK_CAPACITY} of ${data.size}")
         sendRawChunk(data, offset, (data.size - offset).toByte(), PackageParameters.NOTHING)
     }
 
     override fun sendBytes(data: ByteArray) {
         synchronized(channel) {
-            sendRawBytes(protector.encrypt(data))
+            Logger.log("...", "===================< SENDING >===================")
+            Logger.log("...", "[DECODED]: ")
+            Logger.log("...", data.toString(Charsets.UTF_8))
+            Logger.log("...", "[RAW]: ")
+            val raw = protector.encrypt(data)
+            Logger.log("...", Base64.getEncoder().encodeToString(raw))
+            Logger.log("...", "-------------------------------------------------")
+            sendRawBytes(raw)
         }
+
+//        synchronized(channel) {
+//            sendRawBytes(protector.encrypt(data))
+//        }
     }
 
     /**
@@ -67,7 +89,7 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
      * Reads part of package that contains it's
      * data length
      */
-    private fun extractLength(channel: ByteChannel): Int {
+    private fun extractLength(channel: ByteChannel): Int? {
         val buffer = ByteBuffer.allocate(1)
 
         if (channel.read(buffer) <= 0)
@@ -92,24 +114,25 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
     }
 
     /**
-     * Accepts ByteArray coming from the socket. Due to
-     * the fact that data may be passed as several packages,
-     * it will automatically be reconstructed via headerCache
+     * Reads a package and returns its parameters and contents
      */
-    private fun readRawBytes(): ByteArray {
-        var headerLength = 0
-        cache.clear()
+    private fun readRawChunk(): ByteArray? {
+        Logger.log("...", "GETTING: new chunk")
 
-        do {
-            val length = extractLength(channel)
+        var length = extractLength(channel)
+        Logger.log("...", "GETTING: length of chunk: $length")
+
+        while (length != null) {
             val parameters = extractParameters(channel)
+            Logger.log("...", "GETTING: parameters: $parameters")
+
             val buffer = ByteBuffer.allocate(length)
 
             // if got something
             val bytesRead = channel.read(buffer)
 
             if (bytesRead <= 0)
-                break
+                return null
 
             buffer.flip()
 
@@ -122,23 +145,41 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
                 index++
             }
 
-            headerLength += data.size
+            Logger.log("...", "GETTING: adding chunk to cache")
             cache.add(data)
 
-            // if there's something further
-        } while (parameters.provide(PackageParameters.HAS_NEXT))
+            // it was the last package
+            // bring list items together into `header`
+            if (!parameters.provide(PackageParameters.HAS_NEXT)) {
+                Logger.log("...", "GETTING: finalizing")
+                val result = cache.concat()
+                cache.clear()
+                return result
+            }
 
-        // bring list items together into `header`
-        return cache.concat()
+            Logger.log("...", "GETTING: moving forward")
+            length = extractLength(channel)
+            Logger.log("...", "GETTING: length of chunk: $length")
+        }
+
+        // it's not the last package yet
+        return null
     }
 
-    override fun readBytes(): ByteArray {
-//        println("===================< RECEIVED >===================")
-//        println("[RAW]: " + raw.toString(Charsets.UTF_8))
-//        println("[DECODED]: " + data.toString(Charsets.UTF_8))
-//        println("")
+    override fun readBytes(): ByteArray? {
         synchronized(channel) {
-            return protector.decrypt(readRawBytes())
+            readRawChunk()?.let {
+                Logger.log("...", "===================< RECEIVED >===================")
+                Logger.log("...", "[RAW]: ")
+                Logger.log("...", Base64.getEncoder().encodeToString(it))
+                Logger.log("...","[DECODED]: ")
+                val data = protector.decrypt(it)
+                Logger.log("...", data.toString(Charsets.UTF_8))
+                Logger.log("...", "--------------------------------------------------")
+                return data
+            }
         }
+
+        return null
     }
 }

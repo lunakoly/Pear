@@ -4,6 +4,7 @@ import javafx.scene.control.Button
 import ru.luna_koly.pear.components.more.TitledTextField
 import ru.luna_koly.pear.components.more.hintbar
 import ru.luna_koly.pear.components.more.titledtextfield
+import ru.luna_koly.pear.events.InfoUpdatedEvent
 import ru.luna_koly.pear.logic.DataBase
 import tornadofx.*
 
@@ -54,6 +55,8 @@ class SettingsPopup : Fragment() {
                 dataBase.getProfileConnectors().forEach {
                     it.sendInfoUpdatedNotification()
                 }
+
+                fire(InfoUpdatedEvent(dataBase.user))
             }
         }
 

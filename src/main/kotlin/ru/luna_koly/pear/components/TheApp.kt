@@ -2,6 +2,7 @@ package ru.luna_koly.pear.components
 
 import javafx.scene.Scene
 import javafx.stage.Stage
+import ru.luna_koly.pear.components.debug.TerminalView
 import ru.luna_koly.pear.components.more.EvenMoreStyles
 import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.net.analyzer.RequestAnalyzer

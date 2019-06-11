@@ -95,8 +95,9 @@ class Net : Controller(), Runnable {
 
             val selection = selector.selectedKeys()
 
-            for (that in selection) {
+            loop@ for (that in selection) {
                 when {
+                    !that.isValid -> continue@loop
                     that.isAcceptable -> onClientAccepted(that)
                     that.isReadable -> onDataReceived(that)
                 }
@@ -152,6 +153,7 @@ class Net : Controller(), Runnable {
             fire(InvalidAddressEvent)
             return
         } catch (e: Exception) {
+            e.printStackTrace()
             Logger.log("Net", "Something happened while connecting to `${event.address}`")
             fire(InvalidAddressEvent)
             return
@@ -164,7 +166,17 @@ class Net : Controller(), Runnable {
 
         val profileConnector = protocol.acceptServer(connection)
 
+        Logger.log(
+            "Net",
+            "Client requested > Server has been accepted"
+        )
+
         if (profileConnector != null) {
+            Logger.log(
+                "Net",
+                "Client requested > profileConnector to server is OK"
+            )
+
             profileConnector.updateInfo()
             register(socket, profileConnector)
             fire(ConnectionEstablishedEvent(profileConnector))

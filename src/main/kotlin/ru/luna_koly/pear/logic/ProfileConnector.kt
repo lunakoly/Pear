@@ -13,7 +13,7 @@ class ProfileConnector(
     fun sendMessage(message: String) {
         lastBoundConnection?.let {
             analyzer.sendMessage(it, message)
-            dataBase.addMessage(Message(profile, message, true))
+            dataBase.addMessage(profile, Message(dataBase.user, message, true))
         }
     }
 

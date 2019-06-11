@@ -17,7 +17,7 @@ interface Connection {
     /**
      * Reads protected data
      */
-    fun readBytes(): ByteArray
+    fun readBytes(): ByteArray?
 
     /**
      * Alias for string data
@@ -27,5 +27,11 @@ interface Connection {
     /**
      * Alias for string data
      */
-    fun readString() = String(readBytes(), Charsets.UTF_8)
+    fun readString(): String? {
+        readBytes()?.let {
+            return String(it, Charsets.UTF_8)
+        }
+
+        return null
+    }
 }

@@ -2,6 +2,7 @@ package ru.luna_koly.pear.components
 
 import javafx.scene.layout.VBox
 import javafx.scene.text.Font
+import ru.luna_koly.pear.components.debug.TerminalView
 import ru.luna_koly.pear.components.more.chatpane
 import ru.luna_koly.pear.components.more.sidebar
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
@@ -58,17 +59,23 @@ class MainWindow : View("Pear") {
 
         subscribe<InfoUpdatedEvent> {
             sideBar.update(it.person)
-            chatPane.update(it.person)
-            chatPane.refresh(dataBase.getMessagesFor(it.person))
+
+            if (chatPane.selectedConnector?.profile?.identity == it.person.identity) {
+                chatPane.update(it.person)
+                chatPane.refresh(dataBase.getMessagesFor(it.person))
+            }
         }
 
         subscribe<MessageReceivedEvent> {
-            dataBase.addMessage(it.message)
+            dataBase.addMessage(it.message.author, it.message)
         }
 
         subscribe<UpdateMessagesEvent> {
             chatPane.refresh(dataBase.getMessagesFor(it.person))
         }
+
+        // debug terminal
+        // tornadofx.find(TerminalView::class).openWindow()
     }
 
     /**

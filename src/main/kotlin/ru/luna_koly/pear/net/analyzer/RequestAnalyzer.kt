@@ -8,8 +8,10 @@ import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.logic.Message
 import ru.luna_koly.pear.logic.Person
 import ru.luna_koly.pear.net.connection.Connection
+import ru.luna_koly.pear.util.ByteCache
 import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
+import java.io.IOException
 import java.security.GeneralSecurityException
 
 /**
@@ -28,7 +30,7 @@ class RequestAnalyzer : Controller(), Analyser {
 
     override fun analyze(connection: Connection, author: Person) {
         try {
-            val data = connection.readString()
+            val data = connection.readString() ?: return
             val content = JsonParser.parse(data)
 
             when(content[TASK].value) {
@@ -64,6 +66,11 @@ class RequestAnalyzer : Controller(), Analyser {
             println("Caused at: $connection")
             e.printStackTrace()
         }
+
+        catch (e: IOException) {
+            Logger.log("RequestAnalyzer", "Error > Connection error")
+            println("Caused at: $connection")
+        }
     }
 
     private fun onMessage(content: Json.Object, author: Person) {
@@ -74,14 +81,14 @@ class RequestAnalyzer : Controller(), Analyser {
         Logger.log("RequestAnalyzer", "Got INFO_UPDATE, sending data")
         connection.sendString(Json.dictionary {
             item(TASK, DESCRIPTION)
-            item("topBarButton", dataBase.user.name)
+            item("name", dataBase.user.name)
             item("info", dataBase.user.info)
         }.toString())
     }
 
     private fun onDescription(content: Json.Object, author: Person) {
         Logger.log("RequestAnalyzer", "Got DESCRIPTION, applying data")
-        val name = content["topBarButton"].value
+        val name = content["name"].value
         val info = content["info"].value
         author.name = name
         author.info = info

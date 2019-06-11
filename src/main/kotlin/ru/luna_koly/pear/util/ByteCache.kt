@@ -2,6 +2,10 @@ package ru.luna_koly.pear.util
 
 import java.util.*
 
+/**
+ * Helps to get a full byte from
+ * a sequence of chunks
+ */
 class ByteCache {
     /**
      * Caches incoming ByteArray data and helps to

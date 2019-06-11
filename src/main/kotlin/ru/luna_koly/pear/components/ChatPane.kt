@@ -27,7 +27,7 @@ class ChatPane : BorderPane() {
     private var protector: Label by singleAssign()
     private var isProtectorVisible = true
 
-    private var selectedConnector: ProfileConnector? = null
+    var selectedConnector: ProfileConnector? = null
 
     init {
         addClass(ChatPaneStyle.chatPane)
@@ -63,7 +63,7 @@ class ChatPane : BorderPane() {
             promptText = "Type..."
 
             action {
-                if (text.isNotEmpty()) {
+                if (text.isNotBlank()) {
                     selectedConnector?.sendMessage(text)
                     text = ""
                 }

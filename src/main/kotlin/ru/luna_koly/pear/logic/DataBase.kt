@@ -50,19 +50,19 @@ class DataBase : Controller() {
         }
     }
 
-    fun addMessage(message: Message) {
+    fun addMessage(other: Person, message: Message) {
         synchronized(receivedMessages) {
-            var list = receivedMessages[message.author]
+            var list = receivedMessages[other]
 
             if (list == null) {
                 list = mutableListOf()
-                receivedMessages[message.author] = list
+                receivedMessages[other] = list
             }
 
             list.add(message)
         }
 
-        fire(UpdateMessagesEvent(message.author))
+        fire(UpdateMessagesEvent(other))
     }
 
     fun getMessagesFor(person: Person): List<Message> {

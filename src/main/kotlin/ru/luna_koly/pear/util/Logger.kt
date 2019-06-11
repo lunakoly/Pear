@@ -20,6 +20,9 @@ object Logger : Controller() {
     }
 
     fun log(namespace: String, message: String) {
+        synchronized(System.out) {
+            println("$namespace > ${Thread.currentThread().name} > $message")
+        }
         fire(LogEvent("$namespace > ${Thread.currentThread().name} > $message"))
     }
 }
