@@ -1,19 +1,27 @@
 package ru.luna_koly.pear.components
 
 import javafx.scene.Scene
+import javafx.stage.Stage
+import ru.luna_koly.pear.components.more.EvenMoreStyles
 import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.net.analyzer.RequestAnalyzer
 import ru.luna_koly.pear.net.protocol.IdentityValidationProtocol
 import ru.luna_koly.pear.util.Logger
-import tornadofx.App
-import tornadofx.FX
-import tornadofx.UIComponent
-import tornadofx.find
+import tornadofx.*
 
-class TheApp : App(TerminalView::class) {
+class TheApp : App(
+    MainWindow::class,
+    Decorations::class,
+    EvenMoreStyles::class,
+    SideBarStyle::class,
+    PopupStyle::class,
+    ChatPaneStyle::class
+) {
     override fun createPrimaryScene(view: UIComponent) = Scene(view.root, 800.0, 600.0)
 
     init {
+        reloadStylesheetsOnFocus()
+
         // initialize DataBase
         val dataBase = find(DataBase::class)
 
@@ -43,5 +51,11 @@ class TheApp : App(TerminalView::class) {
         netThread.start()
 
         Logger.log("UI", "Starting Net...")
+    }
+
+    override fun start(stage: Stage) {
+        super.start(stage)
+        stage.minWidth = 500.0
+        stage.minHeight = 500.0
     }
 }

@@ -1,5 +1,6 @@
 package ru.luna_koly.pear.logic
 
+import ru.luna_koly.pear.events.UpdateMessagesEvent
 import ru.luna_koly.pear.net.cryptor.ClientCryptor
 import ru.luna_koly.pear.net.cryptor.Cryptor
 import tornadofx.Controller
@@ -7,8 +8,9 @@ import java.io.File
 import java.security.PublicKey
 
 class DataBase : Controller() {
-    val profiles = ArrayList<Profile>()
-    val profileConnectors = ArrayList<ProfileConnector>()
+    private val profiles = ArrayList<Profile>()
+    private val profileConnectors = ArrayList<ProfileConnector>()
+    private val receivedMessages = HashMap<Person, MutableList<Message>>()
 
     /**
      * Synchronously looks for the corresponding
@@ -33,6 +35,40 @@ class DataBase : Controller() {
     fun addProfileConnector(profileConnector: ProfileConnector) {
         synchronized(profileConnectors) {
             profileConnectors.add(profileConnector)
+        }
+    }
+
+    fun getProfiles(): List<Profile> {
+        synchronized(profiles) {
+            return profiles.toList()
+        }
+    }
+
+    fun getProfileConnectors(): List<ProfileConnector> {
+        synchronized(profileConnectors) {
+            return profileConnectors.toList()
+        }
+    }
+
+    fun addMessage(message: Message) {
+        synchronized(receivedMessages) {
+            var list = receivedMessages[message.author]
+
+            if (list == null) {
+                list = mutableListOf()
+                receivedMessages[message.author] = list
+            }
+
+            list.add(message)
+        }
+
+        fire(UpdateMessagesEvent(message.author))
+    }
+
+    fun getMessagesFor(person: Person): List<Message> {
+        synchronized(receivedMessages) {
+            val list = receivedMessages[person] ?: return emptyList()
+            return list.toList()
         }
     }
 

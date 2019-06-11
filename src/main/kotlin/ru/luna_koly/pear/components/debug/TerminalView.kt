@@ -1,4 +1,4 @@
-package ru.luna_koly.pear.components
+package ru.luna_koly.pear.components.debug
 
 import javafx.beans.property.SimpleStringProperty
 import ru.luna_koly.pear.util.Logger
@@ -35,8 +35,8 @@ class TerminalView : View("Pear | Terminal") {
             Logger.log("UI", "ChannelConnection Established with ${it.profileConnector.profile.name}")
         }
 
-        subscribe<ru.luna_koly.pear.events.MessageEvent> {
-            Logger.log("UI", "Message > ${it.author.name} > ${it.text}")
+        subscribe<ru.luna_koly.pear.events.MessageReceivedEvent> {
+            Logger.log("UI", "Message > ${it.message.author.name} > ${it.message.text}")
         }
     }
 

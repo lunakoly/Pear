@@ -56,11 +56,10 @@ class IdentityValidationProtocol(
 
         // bind connection with profile
         val profile = dataBase.getProfileFor(othersKey)
-        val profileConnector = ProfileConnector(profile, analyser)
+        val profileConnector = ProfileConnector(profile, analyser, dataBase)
         profileConnector.lastBoundConnection = connection
         dataBase.addProfileConnector(profileConnector)
 
-        Logger.log("IdentityValidationProtocol", "ProfileConnector " + (dataBase.profileConnectors.size - 1) + " is registered as Acceptor")
         return profileConnector
     }
 
@@ -80,11 +79,10 @@ class IdentityValidationProtocol(
 
         // bind connection with profile
         val profile = dataBase.getProfileFor(othersKey)
-        val profileConnector = ProfileConnector(profile, analyser)
+        val profileConnector = ProfileConnector(profile, analyser, dataBase)
         profileConnector.lastBoundConnection = connection
         dataBase.addProfileConnector(profileConnector)
 
-        Logger.log("IdentityValidationProtocol", "ProfileConnector " + (dataBase.profileConnectors.size - 1) + " is registered as Initiator")
         return profileConnector
     }
 }

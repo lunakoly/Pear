@@ -1,7 +1,7 @@
 package ru.luna_koly.pear.util
 
 import ru.luna_koly.pear.events.LogEvent
-import ru.luna_koly.pear.components.TerminalView
+import ru.luna_koly.pear.components.debug.TerminalView
 import tornadofx.Controller
 
 /**

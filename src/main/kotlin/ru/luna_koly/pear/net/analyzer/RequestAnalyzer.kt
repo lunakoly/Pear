@@ -2,8 +2,10 @@ package ru.luna_koly.pear.net.analyzer
 
 import ru.luna_koly.json.Json
 import ru.luna_koly.json.JsonParser
-import ru.luna_koly.pear.events.MessageEvent
+import ru.luna_koly.pear.events.InfoUpdatedEvent
+import ru.luna_koly.pear.events.MessageReceivedEvent
 import ru.luna_koly.pear.logic.DataBase
+import ru.luna_koly.pear.logic.Message
 import ru.luna_koly.pear.logic.Person
 import ru.luna_koly.pear.net.connection.Connection
 import ru.luna_koly.pear.util.Logger
@@ -39,7 +41,7 @@ class RequestAnalyzer : Controller(), Analyser {
                 // info update response
                 DESCRIPTION -> onDescription(content, author)
 
-                // when they have changed their name
+                // when they have changed their topBarButton
                 // or something, we can request changes
                 INFO_UPDATED_NOTIFICATION -> onInfoUpdatedNotification(connection)
             }
@@ -65,24 +67,25 @@ class RequestAnalyzer : Controller(), Analyser {
     }
 
     private fun onMessage(content: Json.Object, author: Person) {
-        fire(MessageEvent(author, content["text"].value))
+        fire(MessageReceivedEvent(Message(author, content["text"].value, false)))
     }
 
     private fun onInfoUpdate(connection: Connection) {
         Logger.log("RequestAnalyzer", "Got INFO_UPDATE, sending data")
         connection.sendString(Json.dictionary {
             item(TASK, DESCRIPTION)
-            item("name", dataBase.user.name)
+            item("topBarButton", dataBase.user.name)
             item("info", dataBase.user.info)
         }.toString())
     }
 
     private fun onDescription(content: Json.Object, author: Person) {
         Logger.log("RequestAnalyzer", "Got DESCRIPTION, applying data")
-        val name = content["name"].value
+        val name = content["topBarButton"].value
         val info = content["info"].value
         author.name = name
         author.info = info
+        fire(InfoUpdatedEvent(author))
     }
 
     private fun onInfoUpdatedNotification(connection: Connection) {

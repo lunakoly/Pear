@@ -2,6 +2,7 @@ package ru.luna_koly.pear.components
 
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
 import ru.luna_koly.pear.events.ConnectionRequest
+import ru.luna_koly.pear.events.InvalidAddressEvent
 import ru.luna_koly.pear.logic.ProfileConnector
 import ru.luna_koly.pear.net.analyzer.Analyser
 import ru.luna_koly.pear.net.connection.ChannelConnection
@@ -144,6 +145,16 @@ class Net : Controller(), Runnable {
             socket.connect(InetSocketAddress(event.address, DEFAULT_PORT))
         } catch (e: UnresolvedAddressException) {
             Logger.log("Net", "Address `${event.address}` could not be resolved")
+            fire(InvalidAddressEvent)
+            return
+        } catch (e: UnsupportedAddressTypeException) {
+            Logger.log("Net", "Address `${event.address}` is not supported")
+            fire(InvalidAddressEvent)
+            return
+        } catch (e: Exception) {
+            Logger.log("Net", "Something happened while connecting to `${event.address}`")
+            fire(InvalidAddressEvent)
+            return
         }
 
         Logger.log(

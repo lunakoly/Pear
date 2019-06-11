@@ -1,5 +1,6 @@
-package ru.luna_koly.pear.components
+package ru.luna_koly.pear.components.debug
 
+import ru.luna_koly.pear.components.Net
 import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.events.ConnectionRequest
 import tornadofx.Controller
@@ -22,9 +23,9 @@ class TerminalController : Controller() {
             args.size < 2 -> view.log("Usage > list (profiles | connectors)")
 
             args[1] == "profiles" -> {
-                synchronized(dataBase.profiles) {
+                synchronized(dataBase.getProfiles()) {
                     view.log(
-                        dataBase.profiles
+                        dataBase.getProfiles()
                             .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
@@ -32,9 +33,9 @@ class TerminalController : Controller() {
             }
 
             args[1] == "connectors" -> {
-                synchronized(dataBase.profileConnectors) {
+                synchronized(dataBase.getProfileConnectors()) {
                     view.log(
-                        dataBase.profileConnectors
+                        dataBase.getProfileConnectors()
                             .mapIndexed { index, it -> "[$index]\t$it" }
                             .joinToString("\n")
                     )
@@ -55,7 +56,7 @@ class TerminalController : Controller() {
 
             else -> {
                 val id = args[1].toInt()
-                val profile = dataBase.profileConnectors.getOrNull(id)
+                val profile = dataBase.getProfileConnectors().getOrNull(id)
 
                 if (profile == null) {
                     view.log("Error > $id is not a valid profile id")
@@ -72,16 +73,16 @@ class TerminalController : Controller() {
         when {
             args.size < 3 -> view.log("Usage > set <field> <value>")
 
-            args[1] == "name" -> {
+            args[1] == "topBarButton" -> {
                 dataBase.user.name = args[2]
-                dataBase.profileConnectors.forEach {
+                dataBase.getProfileConnectors().forEach {
                     it.sendInfoUpdatedNotification()
                 }
             }
 
             args[1] == "info" -> {
                 dataBase.user.info = args[2]
-                dataBase.profileConnectors.forEach {
+                dataBase.getProfileConnectors().forEach {
                     it.sendInfoUpdatedNotification()
                 }
             }
@@ -98,7 +99,7 @@ class TerminalController : Controller() {
                 if (args.size < 3)
                     view.log("Usage > update info <profile id>")
                 else {
-                    dataBase.profileConnectors.getOrNull(args[2].toInt())?.updateInfo()
+                    dataBase.getProfileConnectors().getOrNull(args[2].toInt())?.updateInfo()
                 }
             }
         }
