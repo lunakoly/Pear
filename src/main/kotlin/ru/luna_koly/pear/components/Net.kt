@@ -135,6 +135,7 @@ class Net : Controller(), Runnable {
     private fun onDataReceived(key: SelectionKey) {
         val profileConnector = key.attachment() as ProfileConnector
         analyzer.analyze(profileConnector.connection, profileConnector.profile)
+        // TODO: client disconnection
     }
 
     init {

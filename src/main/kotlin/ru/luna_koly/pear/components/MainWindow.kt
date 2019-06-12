@@ -70,6 +70,8 @@ class MainWindow : View("Pear") {
             if (chatPane.selectedConnector?.profile?.identity == it.person.identity) {
                 chatPane.update(it.person)
                 chatPane.refresh(dataBase.getMessagesFor(it.person))
+            } else if (it.person == dataBase.user) {
+                chatPane.refresh(dataBase.getMessagesFor(it.person))
             }
         }
 

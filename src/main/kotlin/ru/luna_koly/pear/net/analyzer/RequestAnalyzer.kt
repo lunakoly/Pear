@@ -11,6 +11,7 @@ import ru.luna_koly.pear.net.connection.Connection
 import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
 import java.io.IOException
+import java.nio.channels.ClosedChannelException
 import java.security.GeneralSecurityException
 
 /**
@@ -104,25 +105,37 @@ class RequestAnalyzer : Controller(), Analyser {
     }
 
     override fun sendMessage(receiver: Person, connection: Connection, message: String) {
-        connection.sendString(Json.dictionary {
-            item(TASK, MESSAGE)
-            item("text", message)
-        }.toString())
+        try {
+            connection.sendString(Json.dictionary {
+                item(TASK, MESSAGE)
+                item("text", message)
+            }.toString())
 
-        dataBase.addMessage(receiver, Message(dataBase.user, message, true))
+            dataBase.addMessage(receiver, Message(dataBase.user, message, true))
+        } catch (e: ClosedChannelException) {
+            Logger.log("RequestAnalyzer", "$receiver has disconnected")
+        }
     }
 
     override fun updateInfo(connection: Connection) {
-        Logger.log("RequestAnalyzer", "Asking for up-to-date info")
-        connection.sendString(Json.dictionary {
-            item(TASK, INFO_UPDATE)
-        }.toString())
+        try {
+            Logger.log("RequestAnalyzer", "Asking for up-to-date info")
+            connection.sendString(Json.dictionary {
+                item(TASK, INFO_UPDATE)
+            }.toString())
+        } catch (e: ClosedChannelException) {
+            Logger.log("RequestAnalyzer", "$connection is closed")
+        }
     }
 
     override fun sendInfoUpdatedNotification(connection: Connection) {
-        Logger.log("RequestAnalyzer", "Sending info updated notification")
-        connection.sendString(Json.dictionary {
-            item(TASK, INFO_UPDATED_NOTIFICATION)
-        }.toString())
+        try {
+            Logger.log("RequestAnalyzer", "Sending info updated notification")
+            connection.sendString(Json.dictionary {
+                item(TASK, INFO_UPDATED_NOTIFICATION)
+            }.toString())
+        } catch (e: ClosedChannelException) {
+            Logger.log("RequestAnalyzer", "$connection is closed")
+        }
     }
 }
