@@ -4,9 +4,12 @@ import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
-import javafx.scene.text.TextAlignment
 import tornadofx.*
 
+/**
+ * Common styles that do not
+ * require a stand-alone node definition
+ */
 class Decorations : Stylesheet() {
     companion object {
         val ACCENT = c("#7b8ed4")

@@ -10,6 +10,9 @@ import ru.luna_koly.pear.net.protocol.IdentityValidationProtocol
 import ru.luna_koly.pear.util.Logger
 import tornadofx.*
 
+/**
+ * Required by TornadoFX
+ */
 class TheApp : App(
     MainWindow::class,
     Decorations::class,
@@ -18,6 +21,7 @@ class TheApp : App(
     PopupStyle::class,
     ChatPaneStyle::class
 ) {
+    // needed to define window dimensions
     override fun createPrimaryScene(view: UIComponent) = Scene(view.root, 800.0, 600.0)
 
     init {

@@ -114,7 +114,10 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
     }
 
     /**
-     * Reads a package and returns its parameters and contents
+     * Reads a package and returns null if the whole
+     * data byte array can't be constructed yet. Otherwise
+     * constructs the whole byte array from individual chunks
+     * and returns it
      */
     private fun readRawChunk(): ByteArray? {
         Logger.log("...", "GETTING: new chunk")

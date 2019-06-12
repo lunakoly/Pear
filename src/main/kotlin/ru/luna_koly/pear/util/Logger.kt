@@ -19,6 +19,9 @@ object Logger : Controller() {
         }
     }
 
+    /**
+     * Writes message to stdout & Pear | Terminal
+     */
     fun log(namespace: String, message: String) {
         synchronized(System.out) {
             println("$namespace > ${Thread.currentThread().name} > $message")

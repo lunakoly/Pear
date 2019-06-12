@@ -12,6 +12,9 @@ import tornadofx.addClass
 import tornadofx.label
 import tornadofx.*
 
+/**
+ * A single message displayed at the ChatPane
+ */
 class MessagePane(message: Message) : VBox() {
     init {
         addClass(EvenMoreStyles.messagePane)

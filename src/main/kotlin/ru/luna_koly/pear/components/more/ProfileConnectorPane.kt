@@ -7,6 +7,10 @@ import ru.luna_koly.pear.logic.Person
 import ru.luna_koly.pear.logic.ProfileConnector
 import tornadofx.*
 
+/**
+ * Single item of a SideBar for
+ * displaying the ProfileConnectors list
+ */
 class ProfileConnectorPane(
     val profileConnector: ProfileConnector,
     private val sideBar: SideBar
@@ -23,6 +27,9 @@ class ProfileConnectorPane(
         }
     }
 
+    /**
+     * Reflects profile info changes
+     */
     fun update(person: Person) {
         name.text = person.name
     }

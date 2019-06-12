@@ -8,6 +8,11 @@ import tornadofx.anchorpaneConstraints
 import tornadofx.scrollpane
 import tornadofx.singleAssign
 
+/**
+ * ScrollPane that allows it's ScrollBars to
+ * overlap the contents and hide when they are
+ * not hovered
+ */
 open class OverlayedScrollPane : AnchorPane() {
     private var scrollPane: ScrollPane by singleAssign()
 
@@ -27,6 +32,8 @@ open class OverlayedScrollPane : AnchorPane() {
                 topAnchor = 0.0
             }
         }
+
+        // TODO: hide unnecessary scrollbars & fix their sizes
 
         scrollbar {
             orientation = Orientation.VERTICAL

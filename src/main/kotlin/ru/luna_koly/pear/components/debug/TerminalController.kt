@@ -6,6 +6,9 @@ import ru.luna_koly.pear.events.ConnectionRequest
 import tornadofx.Controller
 import tornadofx.isInt
 
+/**
+ * Defines commands for Pear | Terminal
+ */
 class TerminalController : Controller() {
     private val view: TerminalView by inject()
     private val dataBase: DataBase by inject()

@@ -1,10 +1,12 @@
 package ru.luna_koly.pear.components
 
-import javafx.scene.Parent
 import ru.luna_koly.pear.components.more.hintbar
 import ru.luna_koly.pear.logic.Profile
 import tornadofx.*
 
+/**
+ * Displays information about the profile
+ */
 class ProfileInfoPopup : Fragment() {
     val profile: Profile by params
 

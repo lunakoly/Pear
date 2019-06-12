@@ -16,13 +16,28 @@ class IdentityValidationProtocol(
     private val dataBase: DataBase,
     private val analyser: Analyser
 ) : Protocol {
+    /**
+     * Used to retrieve client-specific
+     * cryptographic information
+     */
     private val cryptor = dataBase.cryptor
 
+    /**
+     * Accepts bytes array and transforms
+     * it into a PublicKey
+     */
     private fun acceptPublicKey(connection: Connection): PublicKey {
         val othersKey = connection.readBytes()!!
         return cryptor.toPublicKey(othersKey)
     }
 
+    /**
+     * Ensures that an other side is really
+     * the one who they are pretending to be by
+     * sending a secret encrypted with their public key
+     * and waiting for the same answer
+     * (they prove that they can decrypt the message)
+     */
     private fun askIdentity(side: String, connection: Connection, othersKey: PublicKey): Boolean {
         val secret = cryptor.generateSecret()
         Logger.log("IdentityValidationProtocol", "$side's secret (${secret.size}) = `${Base64.getEncoder().encodeToString(secret)}`")
@@ -46,6 +61,9 @@ class IdentityValidationProtocol(
         return true
     }
 
+    /**
+     * Sends back the received secret
+     */
     private fun proveIdentity(side: String, connection: Connection, othersKey: PublicKey) {
         val othersEncryptedSecret = connection.readBytes()!!
 
@@ -78,8 +96,7 @@ class IdentityValidationProtocol(
 
         // bind connection with profile
         val profile = dataBase.getProfileFor(othersKey)
-        val profileConnector = ProfileConnector(profile, analyser, dataBase)
-        profileConnector.lastBoundConnection = connection
+        val profileConnector = ProfileConnector(profile, connection, analyser)
         dataBase.addProfileConnector(profileConnector)
 
         return profileConnector
@@ -105,8 +122,7 @@ class IdentityValidationProtocol(
 
         // bind connection with profile
         val profile = dataBase.getProfileFor(othersKey)
-        val profileConnector = ProfileConnector(profile, analyser, dataBase)
-        profileConnector.lastBoundConnection = connection
+        val profileConnector = ProfileConnector(profile, connection, analyser)
         dataBase.addProfileConnector(profileConnector)
 
         return profileConnector

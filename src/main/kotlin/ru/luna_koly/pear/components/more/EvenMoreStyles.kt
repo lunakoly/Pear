@@ -5,8 +5,10 @@ import javafx.scene.Cursor
 import javafx.scene.paint.Color
 import ru.luna_koly.pear.components.Decorations
 import tornadofx.*
-import java.net.URI
 
+/**
+ * Styles for custom nodes
+ */
 class EvenMoreStyles : Stylesheet() {
     companion object {
         val titledTextField by cssclass()

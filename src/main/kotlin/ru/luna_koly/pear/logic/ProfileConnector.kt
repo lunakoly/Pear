@@ -3,30 +3,46 @@ package ru.luna_koly.pear.logic
 import ru.luna_koly.pear.net.analyzer.Analyser
 import ru.luna_koly.pear.net.connection.Connection
 
+/**
+ * Handler for interaction
+ * with a certain Profile
+ */
 class ProfileConnector(
+    /**
+     * Target profile
+     */
     val profile: Profile,
-    private val analyzer: Analyser,
-    private val dataBase: DataBase
+    /**
+     * Used to delegate networking
+     * functionality to
+     */
+    val connection: Connection,
+    /**
+     * Used to delegate networking
+     * functionality to
+     */
+    private val analyzer: Analyser
 ) {
-    var lastBoundConnection: Connection? = null
-
+    /**
+     * Sends message to the profile
+     */
     fun sendMessage(message: String) {
-        lastBoundConnection?.let {
-            analyzer.sendMessage(it, message)
-            dataBase.addMessage(profile, Message(dataBase.user, message, true))
-        }
+        analyzer.sendMessage(profile, connection, message)
     }
 
+    /**
+     * Updates information about the profile
+     */
     fun updateInfo() {
-        lastBoundConnection?.let {
-            analyzer.updateInfo(it)
-        }
+        analyzer.updateInfo(connection)
     }
 
+    /**
+     * Notifies profile about the necessity to
+     * update their information about the user
+     */
     fun sendInfoUpdatedNotification() {
-        lastBoundConnection?.let {
-            analyzer.sendInfoUpdatedNotification(it)
-        }
+        analyzer.sendInfoUpdatedNotification(connection)
     }
 
     override fun toString(): String {

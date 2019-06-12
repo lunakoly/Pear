@@ -8,10 +8,25 @@ import java.security.PublicKey
  * dedicated people described via profiles
  * and the pear user
  */
+@Suppress("unused")
 open class Person(
+    /**
+     * Public key used to identify anyone
+     */
     val identity: PublicKey,
+    /**
+     * Nik
+     */
     var name: String = "Someone",
+    /**
+     * Description
+     */
     var info: String = "",
+    /**
+     * Path to the location of avatar image
+     * on local drive
+     * TODO: implement usage
+     */
     var avatarLocation: String = ""
 ) {
     /**

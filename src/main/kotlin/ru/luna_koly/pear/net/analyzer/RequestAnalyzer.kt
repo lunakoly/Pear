@@ -8,7 +8,6 @@ import ru.luna_koly.pear.logic.DataBase
 import ru.luna_koly.pear.logic.Message
 import ru.luna_koly.pear.logic.Person
 import ru.luna_koly.pear.net.connection.Connection
-import ru.luna_koly.pear.util.ByteCache
 import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
 import java.io.IOException
@@ -26,6 +25,10 @@ class RequestAnalyzer : Controller(), Analyser {
         private const val INFO_UPDATED_NOTIFICATION = "info_updated_notification"
     }
 
+    /**
+     * Analyzer might want to add
+     * info into the database
+     */
     val dataBase: DataBase by params
 
     override fun analyze(connection: Connection, author: Person) {
@@ -100,11 +103,13 @@ class RequestAnalyzer : Controller(), Analyser {
         updateInfo(connection)
     }
 
-    override fun sendMessage(connection: Connection, message: String) {
+    override fun sendMessage(receiver: Person, connection: Connection, message: String) {
         connection.sendString(Json.dictionary {
             item(TASK, MESSAGE)
             item("text", message)
         }.toString())
+
+        dataBase.addMessage(receiver, Message(dataBase.user, message, true))
     }
 
     override fun updateInfo(connection: Connection) {

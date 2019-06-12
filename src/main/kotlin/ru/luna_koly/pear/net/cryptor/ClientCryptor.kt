@@ -46,6 +46,7 @@ class ClientCryptor : Cryptor {
     override fun decrypt(data: ByteArray) = decrypt(data, privateKey)
 
     init {
+        // try read existing keys from user preferences files.
         val publicKeyPath = Paths.get(System.getProperty("user.home"), ".pear", "public_key")
         val privateKeyPath = Paths.get(System.getProperty("user.home"), ".pear", "private_key")
 
@@ -53,6 +54,7 @@ class ClientCryptor : Cryptor {
             Files.isRegularFile(publicKeyPath) &&
             Files.isRegularFile(privateKeyPath)
         ) {
+            // TODO: ensure the keys are valid or generate new ones
             publicKey =
                 toPublicKey(Files.readAllBytes(publicKeyPath))
             privateKey =

@@ -27,7 +27,15 @@ class Net : Controller(), Runnable {
         const val DEFAULT_PORT = 1234
     }
 
+    /**
+     * Parses incoming data and performs
+     * corresponding actions
+     */
     internal val analyzer: Analyser by params
+
+    /**
+     * Establishes a 'valid' connection
+     */
     internal val protocol: Protocol by params
 
     /**
@@ -126,10 +134,7 @@ class Net : Controller(), Runnable {
 
     private fun onDataReceived(key: SelectionKey) {
         val profileConnector = key.attachment() as ProfileConnector
-
-        profileConnector.lastBoundConnection?.let {
-            analyzer.analyze(it, profileConnector.profile)
-        }
+        analyzer.analyze(profileConnector.connection, profileConnector.profile)
     }
 
     init {

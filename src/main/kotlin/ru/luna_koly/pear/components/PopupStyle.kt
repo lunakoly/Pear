@@ -4,6 +4,9 @@ import javafx.scene.effect.DropShadow
 import javafx.scene.paint.Color
 import tornadofx.*
 
+/**
+ * Defines style for all popups
+ */
 class PopupStyle : Stylesheet() {
     companion object {
         val floatingWindowWrapper by cssclass()
@@ -14,6 +17,7 @@ class PopupStyle : Stylesheet() {
 
     init {
         floatingWindowWrapper {
+            // remove top bar
             top {
                 visibility = FXVisibility.HIDDEN
             }

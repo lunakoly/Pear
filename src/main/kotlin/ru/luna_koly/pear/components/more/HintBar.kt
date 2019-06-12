@@ -4,6 +4,10 @@ import javafx.geometry.Orientation
 import javafx.scene.layout.HBox
 import tornadofx.*
 
+/**
+ * Provides a box with hints at the bottom of
+ * a popup
+ */
 class HintBar : HBox() {
     init {
         addClass(EvenMoreStyles.hintBar)
@@ -15,6 +19,9 @@ class HintBar : HBox() {
         }
     }
 
+    /**
+     * Adds a hint to the list
+     */
     fun hint(op: HintBar.() -> Unit) {
         if (children.isNotEmpty())
             this += separator(Orientation.VERTICAL)

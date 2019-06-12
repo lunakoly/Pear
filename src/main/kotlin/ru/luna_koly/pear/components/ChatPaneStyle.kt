@@ -5,6 +5,9 @@ import javafx.scene.Cursor
 import javafx.scene.paint.Color
 import tornadofx.*
 
+/**
+ * Styles for ChatPane
+ */
 class ChatPaneStyle : Stylesheet() {
     companion object {
         val chatPane by cssclass()

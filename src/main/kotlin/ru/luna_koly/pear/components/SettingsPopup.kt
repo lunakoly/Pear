@@ -8,7 +8,14 @@ import ru.luna_koly.pear.events.InfoUpdatedEvent
 import ru.luna_koly.pear.logic.DataBase
 import tornadofx.*
 
+/**
+ * Allows the user to edit their info
+ */
 class SettingsPopup : Fragment() {
+    /**
+     * The updated info needs to be
+     * written somewhere, right?
+     */
     private val dataBase: DataBase by inject()
 
     private var name: TitledTextField by singleAssign()
@@ -57,6 +64,7 @@ class SettingsPopup : Fragment() {
                 }
 
                 fire(InfoUpdatedEvent(dataBase.user))
+                close()
             }
         }
 

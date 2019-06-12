@@ -2,7 +2,6 @@ package ru.luna_koly.pear.components
 
 import javafx.scene.layout.VBox
 import javafx.scene.text.Font
-import ru.luna_koly.pear.components.debug.TerminalView
 import ru.luna_koly.pear.components.more.chatpane
 import ru.luna_koly.pear.components.more.sidebar
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
@@ -19,7 +18,14 @@ import tornadofx.*
 class MainWindow : View("Pear") {
     private val dataBase: DataBase by inject()
 
+    /**
+     * List of available ProfileConnectors
+     */
     private var sideBar: SideBar by singleAssign()
+
+    /**
+     * View for sending messages
+     */
     private var chatPane: ChatPane by singleAssign()
 
     override val root = borderpane {
@@ -60,6 +66,7 @@ class MainWindow : View("Pear") {
         subscribe<InfoUpdatedEvent> {
             sideBar.update(it.person)
 
+            // if current chat is opened for that person
             if (chatPane.selectedConnector?.profile?.identity == it.person.identity) {
                 chatPane.update(it.person)
                 chatPane.refresh(dataBase.getMessagesFor(it.person))

@@ -1,7 +1,5 @@
 package ru.luna_koly.pear.components
 
-import javafx.scene.paint.Color
-import javafx.scene.text.TextAlignment
 import ru.luna_koly.pear.components.more.TitledTextField
 import ru.luna_koly.pear.components.more.hintbar
 import ru.luna_koly.pear.components.more.titledtextfield
@@ -14,8 +12,9 @@ import tornadofx.*
  * Asks user to type the target ip address
  */
 class ConnectionPopup : Fragment() {
-    private val net: Net by inject()
-
+    /**
+     * Where the user types their target address
+     */
     private var addressField: TitledTextField by singleAssign()
 
     override val root = anchorpane {

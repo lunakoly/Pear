@@ -1,8 +1,10 @@
 package ru.luna_koly.pear.components
 
-import javafx.scene.paint.Color
 import tornadofx.*
 
+/**
+ * Styles for SideBar
+ */
 class SideBarStyle : Stylesheet() {
     companion object {
         val sideBar by cssclass()

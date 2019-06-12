@@ -5,6 +5,9 @@ import ru.luna_koly.pear.util.Logger
 import ru.luna_koly.pear.events.ConnectionEstablishedEvent
 import tornadofx.*
 
+/**
+ * A debug view for CLI interaction
+ */
 class TerminalView : View("Pear | Terminal") {
     private val controller: TerminalController by inject()
     private val inputText = SimpleStringProperty()
@@ -40,6 +43,9 @@ class TerminalView : View("Pear | Terminal") {
         }
     }
 
+    /**
+     * Prints message to the output
+     */
     fun log(message: String) {
         userOutput.text += message + '\n'
         // scroll down

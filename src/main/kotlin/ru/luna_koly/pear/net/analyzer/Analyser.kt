@@ -17,7 +17,7 @@ interface Analyser {
      * Sends formatted string data representing
      * a simple message via the given connection
      */
-    fun sendMessage(connection: Connection, message: String)
+    fun sendMessage(receiver: Person, connection: Connection, message: String)
 
     /**
      * Sends a request for getting
