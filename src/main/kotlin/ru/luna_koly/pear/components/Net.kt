@@ -185,7 +185,9 @@ class Net : Controller(), Runnable {
 
             profileConnector.updateInfo()
             register(socket, profileConnector)
+            println("____BEFORE CONNECTION ESTABLISHED EVENT FIRED")
             fire(ConnectionEstablishedEvent(profileConnector))
+            println("____AFTER CONNECTION ESTABLISHED EVENT FIRED")
         }
     }
 }

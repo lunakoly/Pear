@@ -115,7 +115,8 @@ class SideBar : OverlayedScrollPane() {
         val pane = ProfileConnectorPane(profileConnector, this)
         connectorsList += pane
 
-        synchronized(profileConnector) {
+        println("____LOCKING CONNECTORS")
+        synchronized(allConnectors) {
             allConnectors.add(pane)
         }
     }

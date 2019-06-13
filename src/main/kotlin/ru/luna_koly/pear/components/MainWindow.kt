@@ -36,6 +36,7 @@ class MainWindow : View("Pear") {
                 }
 
                 subscribe<ConnectionEstablishedEvent> {
+                    println("____GOT CONNECTION ESTABLISHED EVENT, ADDING PROFILE")
                     addProfileConnector(it.profileConnector)
                 }
             }
@@ -71,7 +72,9 @@ class MainWindow : View("Pear") {
                 chatPane.update(it.person)
                 chatPane.refresh(dataBase.getMessagesFor(it.person))
             } else if (it.person == dataBase.user) {
-                chatPane.refresh(dataBase.getMessagesFor(it.person))
+                chatPane.selectedConnector?.let { connection ->
+                    chatPane.refresh(dataBase.getMessagesFor(connection.profile))
+                }
             }
         }
 

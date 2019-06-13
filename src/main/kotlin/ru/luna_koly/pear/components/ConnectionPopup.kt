@@ -66,7 +66,11 @@ class ConnectionPopup : Fragment() {
         }
 
         subscribe<ConnectionEstablishedEvent> {
-            close()
+            // Hopefully, that'l do th trick with EventBus
+            // I suppose that ConcurrentModificationException
+            // is thrown if I call close() here.
+            // TODO: Is it a bug in TornadoFX?
+            status.text = "Done!"
         }
     }
 }
