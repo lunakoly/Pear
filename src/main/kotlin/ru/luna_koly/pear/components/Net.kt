@@ -9,6 +9,7 @@ import ru.luna_koly.pear.net.connection.ChannelConnection
 import ru.luna_koly.pear.net.protocol.Protocol
 import ru.luna_koly.pear.util.Logger
 import tornadofx.Controller
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.nio.channels.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -134,8 +135,15 @@ class Net : Controller(), Runnable {
 
     private fun onDataReceived(key: SelectionKey) {
         val profileConnector = key.attachment() as ProfileConnector
-        analyzer.analyze(profileConnector.connection, profileConnector.profile)
-        // TODO: client disconnection
+
+        try {
+            analyzer.analyze(profileConnector.connection, profileConnector.profile)
+        } catch (e: IOException) {
+            // TODO: client disconnection
+            // disconnection
+            key.channel().close()
+            key.cancel()
+        }
     }
 
     init {

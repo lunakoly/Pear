@@ -70,11 +70,6 @@ class RequestAnalyzer : Controller(), Analyser {
             println("Caused at: $connection")
             e.printStackTrace()
         }
-
-        catch (e: IOException) {
-            Logger.log("RequestAnalyzer", "Error > Connection error")
-            println("Caused at: $connection")
-        }
     }
 
     private fun onMessage(content: Json.Object, author: Person) {

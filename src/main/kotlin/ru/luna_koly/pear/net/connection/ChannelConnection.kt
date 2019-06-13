@@ -2,6 +2,7 @@ package ru.luna_koly.pear.net.connection
 
 import ru.luna_koly.pear.util.ByteCache
 import ru.luna_koly.pear.util.Logger
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
 import java.util.*
@@ -124,6 +125,11 @@ class ChannelConnection(private val channel: ByteChannel) : Connection {
 
         var length = extractLength(channel)
         Logger.log("...", "GETTING: length of chunk: $length")
+
+        // We got data but the initial length
+        // is 0
+        if (length == null || length == 0)
+            throw IOException("The initial length is 0 > Disconnection")
 
         while (length != null) {
             val parameters = extractParameters(channel)
